@@ -8,7 +8,7 @@ Before running the app locally, need to install both backend and frontend depend
 
 `cd dixit-web`
 
-We need node version 12 and npm, in order to dependencies and run/compile the frontend. Install it with:
+We need node version 12 and npm, in order to manage dependencies and run/compile the frontend. Install it with:
 
 `sudo apt -y install nodejs`
 
@@ -20,7 +20,7 @@ and then verify the installed version (should 12.x) by running
 
 `node --version`
 
-In order to install the project and download the necessary dependencies, run:
+Install frontend dependencies:
 
 `npm install`
 
