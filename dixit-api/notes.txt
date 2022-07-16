@@ -1,0 +1,9 @@
+- setting up nginx... to redirect http to https
+https://www.digitalocean.com/community/tutorials/how-to-set-up-django-with-postgres-nginx-and-gunicorn-on-ubuntu-16-04
+- less loud sound
+- should not be able to join a non-existent game (and have a blank game board full of errors!)
+- scoring/podium should look nicer (mesi sto xryso)
+- players should not be able to play hands not in their hand
+- timing errors when advancing the game state (the not player specific one..) (potentially)
+- the exported greek words can be printed with print(u"\u03b9\u03c3\u03bf\u03c4\u03b7\u03c2")
+- show who has voted

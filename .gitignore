@@ -1,0 +1,8 @@
+dixit-api/game_data
+async-test
+dixit-api/__pycache__
+dixit-api/react_build
+dixit-web/build
+dixit-web/node_modules
+certs
+.idea
