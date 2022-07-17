@@ -6,7 +6,7 @@ import redis
 
 from cute_ids import generate_cute_id
 from models import Game
-from datastore import get_game_by_id, get_all_games, add_game, update_game
+from datastore import get_game_by_id, get_all_games, add_game, update_game, get_locked_game_by_id, LockingException
 import utils
 import conf
 import atexit
@@ -127,7 +127,7 @@ def games_status_api(gid):
         return jsonify({"game": game_data})
 
 
-def get_authenticated_game_and_player_or_error(gid, request):
+def get_authenticated_game_and_player_or_error(gid, request, lock=False):
     intended_game = request.cookies.to_dict()['gid']
     player = request.cookies.to_dict()['player']
     if intended_game != gid:
@@ -135,7 +135,14 @@ def get_authenticated_game_and_player_or_error(gid, request):
         error = "Trying to get data for {} when the game the player is in is {}".format(gid, intended_game)
         print(error)
         flask.abort(403, error)
-    game = get_game_by_id(red, gid)
+    if lock:
+        try:
+            game = get_locked_game_by_id(red, gid)
+        except LockingException:
+            print(f"Could not acquire lock for {gid}")
+            flask.abort(400, error)
+    else:
+        game = get_game_by_id(red, gid)
     if not game:
         flask.abort(404)
     if not game.contains_player(player):
@@ -170,7 +177,7 @@ def get_authenticated_game_and_player_or_error_for_resume(request):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_start(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request)
+    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
     try:
         game.start()
         update_game(red, game)
@@ -185,7 +192,7 @@ def games_start(gid):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_set_card(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request)
+    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
     try:
         card = request.json['card']
         phrase = request.json.get('phrase')
@@ -207,7 +214,7 @@ def games_set_card(gid):
 def games_vote_card(gid):
     import traceback
     print('before getting game')
-    game, player = get_authenticated_game_and_player_or_error(gid, request)
+    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
     print("after getting game")
     try:
         card = request.json['vote']  # this is the 'string' of the card
@@ -225,7 +232,7 @@ def games_vote_card(gid):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_next_round(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request)
+    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
     try:
         game.start_next_round()
         update_game(red, game)

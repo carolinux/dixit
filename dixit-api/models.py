@@ -331,8 +331,6 @@ class Game:
             card_to_player[card] = player
 
         correct_votes = votes_to_card.get(self.get_narrator_card(), 0)
-
-
         if 0 < correct_votes < self.num() - 1:
             scores[self.get_narrator()] = 3
             for p in self.get_non_narrators():
@@ -350,7 +348,6 @@ class Game:
             if trickster not in scores:
                 scores[trickster] = 0
             scores[trickster] += votes
-
 
         for p in self.players:
             self.scores[p] += scores.get(p, 0)
