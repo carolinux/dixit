@@ -50,8 +50,9 @@ def get_locked_game_by_id(cli, gid):
     return Game.from_json(game_json)
 
 
-def add_game(cli, g: Game):
-    cli.hset("games", g.id, g.to_json())
+def add_game(cli, g: Game) -> bool:
+    """Add game with id if the game id doesn't already exist."""
+    return cli.hsetnx("games", g.id, g.to_json())
 
 
 def update_game(cli, g: Game):

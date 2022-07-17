@@ -77,11 +77,10 @@ def games_api():
         if game_id == "new":
             while True:
                 uid = generate_cute_id()
-                break  # FIXME need to generate an id that doesn't already exist in redis
-                #if uid not in games:
-                #    break
-            game = Game(uid)
-            add_game(red, game)
+                game = Game(uid)
+                added = add_game(red, game)
+                if added:
+                    break
         else:
             uid = game_id
             game = get_game_by_id(red, uid)
