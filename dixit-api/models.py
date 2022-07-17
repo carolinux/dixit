@@ -1,5 +1,7 @@
 from collections import defaultdict
+from dataclasses import dataclass, asdict
 import random
+import json
 from uuid import uuid4
 from copy import copy
 
@@ -20,7 +22,25 @@ MAX_CARD = 110
 # TODO: persistent storage !!
 
 
-class Game(object):
+@dataclass
+class Game:
+    id: str
+    currentRound: dict
+    sealedRounds: list
+    players: list
+    winners: list
+    scores: dict
+    cards: list
+    currentState: str
+
+    @staticmethod
+    def from_json(cls, json_str: str) -> 'Game':
+        d = json.loads(json_str)
+        return Game(**d)
+
+    def to_json(self) -> str:
+        d = asdict(self)
+        return json.dumps(d)
 
     def __init__(self, id=None):
         if id:
@@ -367,7 +387,7 @@ class Game(object):
         self.currentState = GAME_ENDED
         return True
 
-    def to_json(self):
+    def to_json_lite(self):
         """Basic record of the game."""
         print(self.sealedRounds)
         return {self.id: {'rounds': self.sealedRounds, 'players': self.players, 'scores': self.scores}}
