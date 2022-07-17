@@ -32,7 +32,16 @@ Run it again everytime a dependency is added or changed in package.json
 
 `cd dixit-api`
 
-We need Python 3.6 and pipenv in order to manage dependencies and run the backend.
+We need Docker,Python 3.6 and pipenv in order to manage dependencies and run the backend.
+### Install Docker
+```sudo snap install docker```
+To be able to run Docker without being superuser:
+```commandline
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+reboot
+```
 
 ### Install Python 3.6
 
@@ -58,7 +67,7 @@ to install the dependencies. Run it again whenever the dependencies change in th
 
 ## Run app locally
 
-`sh startlocal.sh` -- starts the game at http://0.0.0.0:8000
+`bash startlocal.sh` -- starts the game at http://0.0.0.0:8000
 
 Have fun playing different players from different browsers.
 
@@ -67,4 +76,4 @@ Have fun playing different players from different browsers.
 
 Install the SSH certificate on the production server by following the instructions here: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal
 Configure the domain name dixit.lucidcode.ch to point to the IP of the production server
-From the server run `sh startprod.sh`
+From the server run `sudo bash startprod.sh`

@@ -1,4 +1,3 @@
-from collections import defaultdict
 from dataclasses import dataclass, asdict
 import random
 import json
@@ -30,11 +29,12 @@ class Game:
     players: list
     winners: list
     scores: dict
+    narratorIdx: int
     cards: list
     currentState: str
 
     @staticmethod
-    def from_json(cls, json_str: str) -> 'Game':
+    def from_json(json_str: str) -> 'Game':
         d = json.loads(json_str)
         return Game(**d)
 
@@ -42,19 +42,43 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None):
-        if id:
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None):
+        if id is not None:
             self.id = id
         else:
             self.id = uuid4()
-        self.currentRound = {}
-        self.sealedRounds = []
-        self.players = []
-        self.winners = []
-        self.scores = {}
-        self.narratorIdx = None
-        self.cards = self.init_cards()
-        self.currentState = WAITING_TO_START
+        if currentRound is not None:
+            self.currentRound = currentRound
+        else:
+            self.currentRound = {}
+        if sealedRounds is not None:
+            self.sealedRounds = sealedRounds
+        else:
+            self.sealedRounds = []
+        if players is not None:
+            self.players = players
+        else:
+            self.players = []
+        if winners is not None:
+            self.winners = winners
+        else:
+            self.winners = []
+        if scores is not None:
+            self.scores = scores
+        else:
+            self.scores = {}
+        if narratorIdx is not None:
+            self.narratorIdx = narratorIdx
+        else:
+            self.narratorIdx = None
+        if cards is not None:
+            self.cards = cards
+        else:
+            self.cards = self.init_cards()
+        if currentState is not None:
+            self.currentState = currentState
+        else:
+            self.currentState = WAITING_TO_START
 
     def init_cards(self):
         return list(range(1, MAX_CARD + 1)) # <- for the medusa deck change... allow to choose deck?
@@ -293,18 +317,20 @@ class Game:
             self.currentState = WAITING_FOR_VOTES
 
     def set_scores(self):
-        scores = defaultdict(lambda:0)
+        scores = {}
         votes = self.currentRound['votes']
-        votes_to_card = defaultdict(lambda:0)
+        votes_to_card = {}
         card_to_player = {}
         for player, card in votes.items():
+            if card not in votes_to_card:
+                votes_to_card[card] = 0
             votes_to_card[card] += 1
 
         # for the extra pointz
         for player, card in self.currentRound['decoys'].items():
             card_to_player[card] = player
 
-        correct_votes = votes_to_card[self.get_narrator_card()]
+        correct_votes = votes_to_card.get(self.get_narrator_card(), 0)
 
 
         if 0 < correct_votes < self.num() - 1:
@@ -320,11 +346,14 @@ class Game:
         for card, votes in votes_to_card.items():
             if card == self.get_narrator_card():
                 continue
-            scores[card_to_player[card]]+=votes
+            trickster = card_to_player[card]
+            if trickster not in scores:
+                scores[trickster] = 0
+            scores[trickster] += votes
 
 
         for p in self.players:
-            self.scores[p] += scores[p]
+            self.scores[p] += scores.get(p, 0)
         self.currentRound['scores'] = scores
 
     def cast_vote(self, player, card):

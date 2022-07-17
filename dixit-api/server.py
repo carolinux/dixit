@@ -2,9 +2,11 @@ import flask
 from flask import Flask, request, jsonify, make_response, render_template
 # from flask_socketio import SocketIO, emit
 from flask_cors import CORS, cross_origin
+import redis
 
 from cute_ids import generate_cute_id
 from models import Game
+from datastore import get_game_by_id, get_all_games, add_game, update_game
 import utils
 import conf
 import atexit
@@ -26,24 +28,21 @@ app.config['CORS_SUPPORTS_CREDENTIALS'] = True
 app.config['CORS_ORIGINS'] = ["http://127.0.0.1:3000"]
 app.config['CORS_EXPOSE_HEADERS'] = ['Access-Control-Allow-Origin']
 
-gg = Game("yellow-ladybug")
-games = {'yellow-ladybug': gg}
-counter = {'c': 0}
+red = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
+
 
 ## React Routes ##
-
 @atexit.register
 def shutdown():
     # save the game data :)
     recs = []
-    for _, g in games.items():
+    for  g in get_all_games(red):
         recs.append(g.to_json_lite())
     data = {'games': recs}
     fn = os.path.join("./game_data/export_{}.json".format(datetime.now().strftime("%Y%m%d_%H%M%S")))
     with open(fn, 'w') as f:
         json.dump(data, f)
 
-from datetime import datetime
 
 @app.route("/")
 def home():
@@ -78,16 +77,18 @@ def games_api():
         if game_id == "new":
             while True:
                 uid = generate_cute_id()
-                if uid not in games:
-                    break
+                break  # FIXME need to generate an id that doesn't already exist in redis
+                #if uid not in games:
+                #    break
             game = Game(uid)
-            add_game(game)
+            add_game(red, game)
         else:
             uid = game_id
-            game = get_game_by_id(uid)
+            game = get_game_by_id(red, uid)
 
         try:
             game.join(player_name)
+            update_game(red, game)
         except Exception as e:
             print(e)
             flask.abort(400, str(e))
@@ -102,7 +103,8 @@ def games_api():
             player = request.args.get('joinable_for_player')
         else:
             player = None
-        return jsonify({"games": [g.serialize_for_list_view(joinable_for_player=player) for _, g in games.items()]})
+        games = get_all_games(red)
+        return jsonify({"games": [g.serialize_for_list_view(joinable_for_player=player) for g in games]})
 
 
 @app.after_request
@@ -112,28 +114,16 @@ def creds(response):
     return response
 
 
-def get_game_by_id(gid):
-    return games.get(gid)
-
-
-def add_game(g):
-    games[g.id] = g
-
-
-@app.route('/games/<gid>', methods=['POST', 'GET'])
+@app.route('/games/<gid>', methods=['GET'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_status_api(gid):
-    counter['c'] += 1
-    print("Called {} times".format(counter['c']))
     if request.method == "GET":
         ### verify that game exists and current request is allowed to get its general state and their personal data ###
         game, player = get_authenticated_game_and_player_or_error(gid, request)
         ### end verify ###
-
         game_data = game.serialize_for_status_view(player)
         # get the public state
-        # TODO: and the users state, cards etc
         return jsonify({"game": game_data})
 
 
@@ -145,7 +135,7 @@ def get_authenticated_game_and_player_or_error(gid, request):
         error = "Trying to get data for {} when the game the player is in is {}".format(gid, intended_game)
         print(error)
         flask.abort(403, error)
-    game = get_game_by_id(gid)
+    game = get_game_by_id(red, gid)
     if not game:
         flask.abort(404)
     if not game.contains_player(player):
@@ -158,7 +148,7 @@ def get_authenticated_game_and_player_or_error(gid, request):
 def get_authenticated_game_and_player_or_error_for_resume(request):
     intended_game = request.cookies.to_dict()['gid']
     player = request.cookies.to_dict()['player']
-    game = get_game_by_id(intended_game)
+    game = get_game_by_id(red, intended_game)
     if not game:
         flask.abort(404)
     if game.has_ended():
@@ -183,6 +173,7 @@ def games_start(gid):
     game, player = get_authenticated_game_and_player_or_error(gid, request)
     try:
         game.start()
+        update_game(red, game)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -202,6 +193,7 @@ def games_set_card(gid):
             game.set_narrator_card(player, card, phrase)
         else:
             game.set_decoy_card(player, card)
+        update_game(red, game)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -213,12 +205,17 @@ def games_set_card(gid):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_vote_card(gid):
+    import traceback
+    print('before getting game')
     game, player = get_authenticated_game_and_player_or_error(gid, request)
+    print("after getting game")
     try:
         card = request.json['vote']  # this is the 'string' of the card
         game.cast_vote(player, card)
+        print("after cast vote")
+        update_game(red, game)
     except Exception as e:
-        print(e)
+        print(traceback.print_exc())
         flask.abort(400, str(e))
     game_data = game.serialize_for_status_view(player)
     return jsonify({"game": game_data})
@@ -231,6 +228,7 @@ def games_next_round(gid):
     game, player = get_authenticated_game_and_player_or_error(gid, request)
     try:
         game.start_next_round()
+        update_game(red, game)
     except Exception as e:
         print(e)
         flask.abort(400, str(e))
@@ -249,4 +247,3 @@ def games_resume_from_cookie():
 if __name__ == '__main__':
     app.run(port=5000, threaded=False, debug=False, host="0.0.0.0")
     # app.run(port=5000, threaded=False, debug=True) #local
-    # pipenv run gunicorn server:app -w=1 -b 0.0.0.0:5000 --threads 4
