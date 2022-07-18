@@ -32,7 +32,7 @@ Run it again everytime a dependency is added or changed in package.json
 
 `cd dixit-api`
 
-We need Docker,Python 3.6 and pipenv in order to manage dependencies and run the backend.
+We need Docker, Python 3.6 and pipenv in order to manage dependencies and run the backend (Python server and Redis).
 ### Install Docker
 ```sudo snap install docker```
 To be able to run Docker without being superuser:
@@ -68,12 +68,17 @@ to install the dependencies. Run it again whenever the dependencies change in th
 ## Run app locally
 
 `bash startlocal.sh` -- starts the game at http://0.0.0.0:8000
+`bash startlocal.sh --rebuild-react` -- to rebuild the react frontend
 
 Have fun playing different players from different browsers.
 
 
 ## Run in production
 
-Install the SSH certificate on the production server by following the instructions here: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal
-Configure the domain name dixit.lucidcode.ch to point to the IP of the production server
+### One offs
+- Configure the domain name dixit.lucidcode.ch to point to the IP of the production server
+
+- Install the SSL certificate on the production server by following the instructions here: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal
+
+### Release
 From the server run `sudo bash startprod.sh`
