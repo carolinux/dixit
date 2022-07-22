@@ -1,6 +1,9 @@
+import logging
+
 import flask
 from flask import Flask, request, jsonify, make_response, render_template
-# from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room
+#from flask_sock import Sock
 from flask_cors import CORS, cross_origin
 import redis
 
@@ -10,6 +13,7 @@ from datastore import get_game_by_id, get_all_games, add_game, update_game, get_
 import utils
 import conf
 import atexit
+import logging
 
 import json
 from datetime import datetime
@@ -20,15 +24,18 @@ app = Flask(__name__, static_url_path='',
             template_folder='react_build')
 app.config['SECRET_KEY'] = conf.secret_key
 app.config["DEBUG"] = True
-cors = CORS(app)
+app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 25}
+socketio = SocketIO(app)
+#cors = CORS(app)
 # origins=["http://127.0.0.1:3000"], headers=['Content-Type'], expose_headers=['Access-Control-Allow-Origin'], supports_credentials=True
-app.config['CORS_HEADERS'] = 'Content-Type'
-app.config['CORS_SUPPORTS_CREDENTIALS'] = True
-app.config['CORS_SUPPORTS_CREDENTIALS'] = True
-app.config['CORS_ORIGINS'] = ["http://127.0.0.1:3000"]
-app.config['CORS_EXPOSE_HEADERS'] = ['Access-Control-Allow-Origin']
+#app.config['CORS_HEADERS'] = 'Content-Type'
+#app.config['CORS_SUPPORTS_CREDENTIALS'] = True
+#app.config['CORS_SUPPORTS_CREDENTIALS'] = True
+#app.config['CORS_ORIGINS'] = ["http://127.0.0.1:3000"]
+#app.config['CORS_EXPOSE_HEADERS'] = ['Access-Control-Allow-Origin']
 
 red = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
+logger = logging.getLogger(__name__)
 
 
 ## React Routes ##
@@ -65,7 +72,6 @@ def board_winners():
     return render_template("index.html")
 
 ## End of React Routes ##
-
 
 
 @app.route('/games', methods=['POST', 'GET'])
@@ -250,6 +256,41 @@ def games_resume_from_cookie():
     return jsonify({"game": game.id, 'player': player})
 
 
+
+@socketio.on('message')
+def echo(data):
+    logger.warning(data)
+    #data = json.loads(data)
+    join_room(data['room'])
+    emit("message", json.dumps({"foo":"bar"}))
+
+
+
+@app.route('/send/<gid>', methods=['GET'])
+def send(gid):
+    socketio.emit('message', json.dumps({'data': str(datetime.now())}), room=gid)
+    return ''
+
+
+@socketio.on('message')
+def echo(data):
+    logger.warning(data)
+    #data = json.loads(data)
+    join_room(data['room'])
+    emit("message", json.dumps({"message":f"thank you for joining {data['room']}"}))
+
+
+@app.route("/pubsub")
+def pubsub():
+    return render_template("socket.html")
+
+# visit pubsub -> we get foo bar initially
+# then visit send/game1 and see that we get the datetime
+# if we visit send/game2 we don't get anything
+
+
+
+
 if __name__ == '__main__':
-    app.run(port=5000, threaded=False, debug=False, host="0.0.0.0")
+    socketio.run(app, port=8000, host='0.0.0.0')
     # app.run(port=5000, threaded=False, debug=True) #local

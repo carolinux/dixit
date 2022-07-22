@@ -20,5 +20,7 @@ if has_param '--rebuild-react' "$@"; then
     cp -r dixit-web/build/ dixit-api/react_build
 fi
 docker stop gamescache && docker rm gamescache || true
+cp dixit-api/templates/* dixit-api/react_build/
 docker run --name gamescache -p 6379:6379 -d redis redis-server
-(cd dixit-api; pipenv run gunicorn server:app -w=1 -b 0.0.0.0:8000 --threads 8)
+#(cd dixit-api; pipenv run gunicorn server:app -w=1 -b 0.0.0.0:8000 --threads 8)
+(cd dixit-api; pipenv run python server.py)
