@@ -1,5 +1,6 @@
-from collections import defaultdict
+from dataclasses import dataclass, asdict
 import random
+import json
 from uuid import uuid4
 from copy import copy
 
@@ -20,21 +21,64 @@ MAX_CARD = 110
 # TODO: persistent storage !!
 
 
-class Game(object):
+@dataclass
+class Game:
+    id: str
+    currentRound: dict
+    sealedRounds: list
+    players: list
+    winners: list
+    scores: dict
+    narratorIdx: int
+    cards: list
+    currentState: str
 
-    def __init__(self, id=None):
-        if id:
+    @staticmethod
+    def from_json(json_str: str) -> 'Game':
+        d = json.loads(json_str)
+        return Game(**d)
+
+    def to_json(self) -> str:
+        d = asdict(self)
+        return json.dumps(d)
+
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None):
+        if id is not None:
             self.id = id
         else:
             self.id = uuid4()
-        self.currentRound = {}
-        self.sealedRounds = []
-        self.players = []
-        self.winners = []
-        self.scores = {}
-        self.narratorIdx = None
-        self.cards = self.init_cards()
-        self.currentState = WAITING_TO_START
+        if currentRound is not None:
+            self.currentRound = currentRound
+        else:
+            self.currentRound = {}
+        if sealedRounds is not None:
+            self.sealedRounds = sealedRounds
+        else:
+            self.sealedRounds = []
+        if players is not None:
+            self.players = players
+        else:
+            self.players = []
+        if winners is not None:
+            self.winners = winners
+        else:
+            self.winners = []
+        if scores is not None:
+            self.scores = scores
+        else:
+            self.scores = {}
+        if narratorIdx is not None:
+            self.narratorIdx = narratorIdx
+        else:
+            self.narratorIdx = None
+        if cards is not None:
+            self.cards = cards
+        else:
+            self.cards = self.init_cards()
+        if currentState is not None:
+            self.currentState = currentState
+        else:
+            self.currentState = WAITING_TO_START
 
     def init_cards(self):
         return list(range(1, MAX_CARD + 1)) # <- for the medusa deck change... allow to choose deck?
@@ -273,20 +317,20 @@ class Game(object):
             self.currentState = WAITING_FOR_VOTES
 
     def set_scores(self):
-        scores = defaultdict(lambda:0)
+        scores = {}
         votes = self.currentRound['votes']
-        votes_to_card = defaultdict(lambda:0)
+        votes_to_card = {}
         card_to_player = {}
         for player, card in votes.items():
+            if card not in votes_to_card:
+                votes_to_card[card] = 0
             votes_to_card[card] += 1
 
         # for the extra pointz
         for player, card in self.currentRound['decoys'].items():
             card_to_player[card] = player
 
-        correct_votes = votes_to_card[self.get_narrator_card()]
-
-
+        correct_votes = votes_to_card.get(self.get_narrator_card(), 0)
         if 0 < correct_votes < self.num() - 1:
             scores[self.get_narrator()] = 3
             for p in self.get_non_narrators():
@@ -300,11 +344,13 @@ class Game(object):
         for card, votes in votes_to_card.items():
             if card == self.get_narrator_card():
                 continue
-            scores[card_to_player[card]]+=votes
-
+            trickster = card_to_player[card]
+            if trickster not in scores:
+                scores[trickster] = 0
+            scores[trickster] += votes
 
         for p in self.players:
-            self.scores[p] += scores[p]
+            self.scores[p] += scores.get(p, 0)
         self.currentRound['scores'] = scores
 
     def cast_vote(self, player, card):
@@ -367,7 +413,7 @@ class Game(object):
         self.currentState = GAME_ENDED
         return True
 
-    def to_json(self):
+    def to_json_lite(self):
         """Basic record of the game."""
         print(self.sealedRounds)
         return {self.id: {'rounds': self.sealedRounds, 'players': self.players, 'scores': self.scores}}
