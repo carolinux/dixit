@@ -10,16 +10,10 @@ const optionsTemplate = {
   chart: {
     type: 'column'
   },
-  colors: ['#c9b037','#d7d7d7','#ad8a56'],
+  colors: ['#d7d7d7', '#c9b037', '#ad8a56'], // silver, gold, bronze
   title: {
     text: 'Score of this game'
   },
- /* xAxis: {
-    categories: ['Jane', 'John', 'Joe'],
-    title: {
-      text: null
-    }
-  },*/
   yAxis: {
     min: 0,
     title: {
@@ -34,22 +28,6 @@ const optionsTemplate = {
     enabled: false
   }
 };
-
-/*
-{
-    type: 'column',
-    name: 'Jane',
-    data: [30]
-  }, {
-    type: 'column',
-    name: 'Lara',
-    data: [20]
-  }, {
-    type: 'column',
-    name: 'Karolina',
-    data: [14]
-  }
- */
 
 export default function Winners() {
 
@@ -74,6 +52,11 @@ export default function Winners() {
        if (!options) {
 
        let newOptions = JSON.parse(JSON.stringify(optionsTemplate));
+        // rearrange the podium to be silver-gold-bronze
+        let first = game.winners[0];
+        game.winners[0] = game.winners[1];
+        game.winners[1] = first;
+
        game.winners.map((obj)=> {newOptions.series.push({type:'column', name: obj.player, data:[obj.score]})});
        setOptions(newOptions);
        setSoundStatus(Sound.status.PLAYING);
