@@ -22,5 +22,5 @@ fi
 docker stop gamescache && docker rm gamescache || true
 cp dixit-api/templates/* dixit-api/react_build/
 docker run --name gamescache -p 6379:6379 -d redis redis-server
-#(cd dixit-api; pipenv run gunicorn server:app -w=1 -b 0.0.0.0:8000 --threads 8)
-(cd dixit-api; pipenv run python server.py)
+(cd dixit-api; pipenv run gunicorn patched_for_gevent:app -b 0.0.0.0:8000 -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker --workers 1)
+#(cd dixit-api; pipenv run python server.py)
