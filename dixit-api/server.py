@@ -186,6 +186,7 @@ def games_start(gid):
     try:
         game.start()
         update_game(red, game)
+        socketio.emit('update', json.dumps({'data': "game started"}), room=gid)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -206,6 +207,7 @@ def games_set_card(gid):
         else:
             game.set_decoy_card(player, card)
         update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"{player} chose their card."}), room=gid)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -226,6 +228,7 @@ def games_vote_card(gid):
         game.cast_vote(player, card)
         print("after cast vote")
         update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"{player} cast their vote."}), room=gid)
     except Exception as e:
         print(traceback.print_exc())
         flask.abort(400, str(e))
@@ -241,6 +244,7 @@ def games_next_round(gid):
     try:
         game.start_next_round()
         update_game(red, game)
+        socketio.emit('update', json.dumps({'data': "Next round started"}), room=gid)
     except Exception as e:
         print(e)
         flask.abort(400, str(e))
@@ -273,11 +277,10 @@ def send(gid):
 
 
 @socketio.on('join')
-def echo(data):
+def join_websocket(data):
     logger.warning(data)
-    #data = json.loads(data)
     join_room(data['room'])
-    emit("message", json.dumps({"message": f"thank you for joining game {data['room']}"}))
+    emit("update", json.dumps({"data": f"thank you for joining game {data['room']}"}))
 
 
 @app.route("/pubsub")

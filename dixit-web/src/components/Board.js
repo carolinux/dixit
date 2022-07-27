@@ -60,7 +60,6 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-
 export default function Board(props) {
 
   const texts = getTexts();
@@ -76,6 +75,7 @@ export default function Board(props) {
   const audioPhrase = new Audio(phraseSound);
   const audioStart = new Audio(startSound);
 
+
   const [players, setPlayers] = useState([]);
   const [gameState, setGameState] = useState('');
   const [cards, setCards] = useState([]); // cards in hand
@@ -83,14 +83,11 @@ export default function Board(props) {
   const [cardStatuses, setCardStatuses] = useState({}); //statuses of cards in round relative to player or players, depending on game state
   const [isNarrator, setIsNarrator] = useState(false);
   const [phrase, setPhrase] = useState('');
-  let socket = undefined;
+
+
+
 
   let currTimeout = undefined;
-
-
-
-
-
 
   const roundCompleted = true;
   const playerPlayed = false;
@@ -185,9 +182,6 @@ export default function Board(props) {
        let game = resp.data.game;
        let changed = updateFromApi(game);
        //console.log("changed "+changed);
-       if (!changed) {
-            currTimeout = setTimeout(() => updateState(), 14000)
-        }
       }
      )
     .catch(function (error) {
@@ -200,32 +194,47 @@ export default function Board(props) {
         history.push('/')
         return
     }
-    currTimeout = setTimeout(() => updateState(), 14000);
+    currTimeout = setTimeout(() => updateState(), 1000);
   })
 
   };
 
+  let socket = null;
+
+
 
   useEffect(() => {
-    //console.log('inside use effect');
+    console.log('inside use effect');
+
+    if (socket === null) {
+
     socket = io(process.env.REACT_APP_API_URL);
-    //console.log("trying to connect websocket")
-    socket.on('connect', function() {
+
+      socket.on('connect', function() {
         console.log("socket connected");
+        //setIsConnected(true);
         socket.emit('join', {room: gid});
     });
 
-    socket.on("message", (data) => {
-    const packet = JSON.parse(data);
-    console.log("recvied "+JSON.stringify(packet));
-  });
+    socket.on('disconnect', function() {
+        console.log("socket disconnected");
+        //setIsConnected(false);
+    });
 
-    const timerID = setTimeout(() => updateState(), 50)
+    socket.on("update", (data) => {
+        const packet = JSON.parse(data);
+        console.log("received game update: "+JSON.stringify(packet));
+        updateState();
+    });
+
+    }
+
+
     return () => {
-      socket.close();
-      clearTimeout(timerID);
+    socket.close()
       if (currTimeout) {
-      clearTimeout(currTimeout);}
+       clearTimeout(currTimeout);
+       }
     }
   }, [gameState, players, cards, playedCards, isNarrator, phrase, cardStatuses, mainPlayer]); // call useeffect every time something changes
 
