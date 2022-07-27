@@ -10,15 +10,12 @@ WAITING_FOR_PLAYERS = "waiting_for_players"
 WAITING_FOR_VOTES = "waiting_for_votes"
 ROUND_REVEALED = "round_revealed"
 GAME_ENDED = "game_ended"
-MIN_PLAYERS = 2 # for testing..
+MIN_PLAYERS = 2  # for testing..
 MAX_PLAYERS = 6
 INITIAL_CARD_ALLOCATION = 6
 SUBSEQUENT_CARD_ALLOCATION = 1
 WIN_SCORE = 36
 MAX_CARD = 110
-
-
-# TODO: persistent storage !!
 
 
 @dataclass
@@ -129,13 +126,11 @@ class Game:
                  'hasSetCard': self.has_set_card(p), 'score': self.get_score(p),
                  'roundScore': self.get_round_score(p)} for p in self.players]
 
-
     def get_score(self, player):
         if not self.is_started():
             return 0
         else:
             return self.scores[player]
-
 
     def get_round_score(self, player):
         if not self.is_started():
@@ -151,7 +146,6 @@ class Game:
         else:
             return self.currentRound.get("decoys", {}).get(player) is not None
 
-
     def has_voted(self, player):
         if not self.is_started():
             return False
@@ -159,7 +153,6 @@ class Game:
             return False
         else:
             return self.currentRound.get("votes", {}).get(player) is not None
-
 
     def serialize_for_status_view(self, player):
         data = self.serialize_for_list_view()
@@ -257,13 +250,6 @@ class Game:
     def get_narrator_card(self):
         return self.currentRound.get('narratorCard')
 
-    ## state transitions from here on -- need to be locked in teh future ##
-    # strictly speaking: start and next can be problematic if called at the same time by multiple people
-    # because they would end up in re-allocating the cards (so there may be a card that appears and gets replaced)
-    # (could possibly get solved by shuffling with specific seed ? not really)
-    # join also may end up with 7 players for example
-    # other stuff just does double work if called in parallel
-
     def join(self, player_name):
         if player_name in self.players:
             raise Exception("Player with name {} already in game {}.".format(player_name, self.id))
@@ -284,7 +270,6 @@ class Game:
             self.create_playing_order()
             self.advance_narrator()
             self.scores = {p:0 for p in self.players}
-
 
             self.currentRound = {}
             self.currentRound['decoys'] = {}
@@ -404,7 +389,7 @@ class Game:
 
         medals = ['gold', 'silver', 'bronze']
 
-        sorted_scores = sorted(self.scores.items(), key=lambda x:x[1])
+        sorted_scores = sorted(self.scores.items(), key=lambda x: x[1])
 
         for _ in medals:
             if sorted_scores:
@@ -420,10 +405,3 @@ class Game:
 
     def has_ended(self):
         return self.currentState == GAME_ENDED
-
-
-
-
-
-
-
