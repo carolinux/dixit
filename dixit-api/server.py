@@ -272,12 +272,12 @@ def send(gid):
     return ''
 
 
-@socketio.on('message')
+@socketio.on('join')
 def echo(data):
     logger.warning(data)
     #data = json.loads(data)
     join_room(data['room'])
-    emit("message", json.dumps({"message":f"thank you for joining {data['room']}"}))
+    emit("message", json.dumps({"message": f"thank you for joining game {data['room']}"}))
 
 
 @app.route("/pubsub")

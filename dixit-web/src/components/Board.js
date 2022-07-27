@@ -15,6 +15,7 @@ import revealSound from './assets/sounds/reveal.mp3'
 import phraseSound from './assets/sounds/phrase.mp3'
 import startSound from './assets/sounds/start.mp3'
 import { KeyboardArrowDown } from '@material-ui/icons';
+import io from 'socket.io-client';
 
 
 const useStyles = makeStyles(() => ({
@@ -82,7 +83,12 @@ export default function Board(props) {
   const [cardStatuses, setCardStatuses] = useState({}); //statuses of cards in round relative to player or players, depending on game state
   const [isNarrator, setIsNarrator] = useState(false);
   const [phrase, setPhrase] = useState('');
+  let socket = undefined;
+
   let currTimeout = undefined;
+
+
+
 
 
 
@@ -180,7 +186,7 @@ export default function Board(props) {
        let changed = updateFromApi(game);
        //console.log("changed "+changed);
        if (!changed) {
-            currTimeout = setTimeout(() => updateState(), 4000)
+            currTimeout = setTimeout(() => updateState(), 14000)
         }
       }
      )
@@ -194,16 +200,29 @@ export default function Board(props) {
         history.push('/')
         return
     }
-    currTimeout = setTimeout(() => updateState(), 4000);
+    currTimeout = setTimeout(() => updateState(), 14000);
   })
 
   };
 
 
   useEffect(() => {
-  //console.log('inside use effect')
+    //console.log('inside use effect');
+    socket = io(process.env.REACT_APP_API_URL);
+    //console.log("trying to connect websocket")
+    socket.on('connect', function() {
+        console.log("socket connected");
+        socket.emit('join', {room: gid});
+    });
+
+    socket.on("message", (data) => {
+    const packet = JSON.parse(data);
+    console.log("recvied "+JSON.stringify(packet));
+  });
+
     const timerID = setTimeout(() => updateState(), 50)
     return () => {
+      socket.close();
       clearTimeout(timerID);
       if (currTimeout) {
       clearTimeout(currTimeout);}
