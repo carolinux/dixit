@@ -94,74 +94,25 @@ export default function Board(props) {
   const playerPlayed = false;
 
   const updateFromApi = (game) => {
-
-        console.log("getting game state from API");
-        console.log(game);
-
-        console.log("prev isNarraotr:" + isNarrator);
-         console.log("prev phrase:" + phrase);
-
-        console.log("prev played cards:"+ JSON.stringify(playedCards));
-
-        let changed = false;
-        if (game.player !== mainPlayer) {
-            console.log("main player changed, was "+mainPlayer+" should now be "+game.player);
-            setMainPlayer(game.player);
-            changed = true;
-        }
-
-        if (game.isNarrator !== isNarrator) {
-            console.log('narr');
-            setIsNarrator(game.isNarrator);
-            changed = true;
-        }
-
-        if (JSON.stringify(playedCards) !==  JSON.stringify(game.roundInfo.playedCards)) {
-            setPlayedCards(game.roundInfo.playedCards);
-            console.log('cards');
-            changed = true;
-       }
-
+        setMainPlayer(game.player);
+        setIsNarrator(game.isNarrator);
+        setPlayedCards(game.roundInfo.playedCards);
        if (game.state !== gameState) {
             if (game.state === 'game_ended') {
                 history.push('/board/'+gid+'/winners');
             }
             else if (game.state === 'round_revealed') {
                 audioReveal.play()
-
             }
             else if (game.state === 'waiting_for_players' || game.state === "waiting_for_votes") {
                 audioPhrase.play()
             }
-            setGameState(game.state); // this re-renders the component....
-            changed = true;
         }
-
-         if (JSON.stringify(game.cardStatuses) !== JSON.stringify(cardStatuses)) {
-            setCardStatuses(game.cardStatuses);
-            changed = true;
-        }
-
-
-       if (JSON.stringify(players) !==  JSON.stringify(game.playerList)) {
-            setPlayers(game.playerList);
-                        //console.log('pl');
-            changed = true;
-       }
-
-       if (JSON.stringify(cards) !==  JSON.stringify(game.roundInfo.hand)) {
-            setCards(game.roundInfo.hand);
-                        //console.log('ha');
-            changed = true;
-       }
-
-
-        if (game.roundInfo.phrase !== phrase) {
-            setPhrase(game.roundInfo.phrase);
-            console.log('phrase');
-            changed = true;
-        }
-        return changed;
+        setGameState(game.state);
+        setCardStatuses(game.cardStatuses);
+        setPlayers(game.playerList);
+        setCards(game.roundInfo.hand);
+        setPhrase(game.roundInfo.phrase);
   }
 
   const transitionGame = (transition, transitionData) => {
@@ -172,7 +123,6 @@ export default function Board(props) {
   }
 
   if (transition == 'start' || transition == 'next') {
-
     audioStart.play();
   }
 
