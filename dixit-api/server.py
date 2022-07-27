@@ -261,28 +261,10 @@ def games_resume_from_cookie():
     return jsonify({"game": game.id, 'player': player})
 
 
-@app.route('/send/<gid>', methods=['GET'])
-def send(gid):
-    socketio.emit('message', json.dumps({'data': str(datetime.now())}), room=gid)
-    return ''
-
-
 @socketio.on('join')
 def join_websocket(data):
-    logger.warning(data)
     join_room(data['room'])
     emit("update", json.dumps({"data": f"thank you for joining game {data['room']}"}))
-
-
-@app.route("/pubsub")
-def pubsub():
-    return render_template("socket.html")
-
-# visit pubsub -> we get foo bar initially
-# then visit send/game1 and see that we get the datetime
-# if we visit send/game2 we don't get anything
-
-
 
 
 if __name__ == '__main__':

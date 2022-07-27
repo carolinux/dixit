@@ -5,7 +5,6 @@ import About from './About';
 import Login from './Login';
 import Board from './Board';
 import Winners from './Winners';
-import PubSub from './PubSub';
 
 function AppContainer(props) {
 
@@ -20,9 +19,6 @@ function AppContainer(props) {
         </Route>
         <Route path='/board/:gid'>
           <Board/>
-        </Route>
-         <Route path='/pubsub'>
-          <PubSub />
         </Route>
         <Route path='/'>
           <Rules />

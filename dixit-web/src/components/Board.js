@@ -158,13 +158,11 @@ export default function Board(props) {
     }
     currTimeout = setTimeout(() => updateState(), 1000);
   })
-
   };
 
-  useEffect(() => {
-    console.log('inside use effect');
+ const connectSocket = () => {
 
-    if (socket === null) {
+    if (socket === null || (socket && socket.readyState == 3)) {
 
     let socket2 = io(process.env.REACT_APP_API_URL);
 
@@ -175,8 +173,15 @@ export default function Board(props) {
     });
 
     socket2.on('disconnect', function() {
-        console.log("socket disconnected");
-        //setIsConnected(false);
+        console.error("socket disconnected, will attempt to reconnect in one second");
+        setTimeout(function() {
+          connectSocket();
+        }, 1000);
+    });
+
+     socket2.on("error", (err) => {
+        console.error('Socket encountered error: ', err.message, 'Closing socket');
+        socket2.close();
     });
 
     socket2.on("update", (data) => {
@@ -185,12 +190,14 @@ export default function Board(props) {
         updateState();
     });
     setSocket(socket2);
-
     }
 
+ };
 
+  useEffect(() => {
+    console.log('inside use effect');
+    connectSocket();
     return () => {
-    //socket.close()
       if (currTimeout) {
        clearTimeout(currTimeout);
        }
