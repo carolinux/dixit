@@ -94,6 +94,7 @@ def games_api():
         try:
             game.join(player_name)
             update_game(red, game)
+            socketio.emit('update', json.dumps({'data': f"Player {player_name} joined game {game.id}"}), room=game.id)
         except Exception as e:
             print(e)
             flask.abort(400, str(e))
@@ -258,16 +259,6 @@ def games_next_round(gid):
 def games_resume_from_cookie():
     game, player = get_authenticated_game_and_player_or_error_for_resume(request)
     return jsonify({"game": game.id, 'player': player})
-
-
-
-@socketio.on('message')
-def echo(data):
-    logger.warning(data)
-    #data = json.loads(data)
-    join_room(data['room'])
-    emit("message", json.dumps({"foo":"bar"}))
-
 
 
 @app.route('/send/<gid>', methods=['GET'])

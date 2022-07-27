@@ -83,6 +83,7 @@ export default function Board(props) {
   const [cardStatuses, setCardStatuses] = useState({}); //statuses of cards in round relative to player or players, depending on game state
   const [isNarrator, setIsNarrator] = useState(false);
   const [phrase, setPhrase] = useState('');
+  const [socket, setSocket] = useState(null);
 
 
 
@@ -94,11 +95,32 @@ export default function Board(props) {
 
   const updateFromApi = (game) => {
 
-         let changed = false;
+        console.log("getting game state from API");
+        console.log(game);
+
+        console.log("prev isNarraotr:" + isNarrator);
+         console.log("prev phrase:" + phrase);
+
+        console.log("prev played cards:"+ JSON.stringify(playedCards));
+
+        let changed = false;
         if (game.player !== mainPlayer) {
+            console.log("main player changed, was "+mainPlayer+" should now be "+game.player);
             setMainPlayer(game.player);
             changed = true;
         }
+
+        if (game.isNarrator !== isNarrator) {
+            console.log('narr');
+            setIsNarrator(game.isNarrator);
+            changed = true;
+        }
+
+        if (JSON.stringify(playedCards) !==  JSON.stringify(game.roundInfo.playedCards)) {
+            setPlayedCards(game.roundInfo.playedCards);
+            console.log('cards');
+            changed = true;
+       }
 
        if (game.state !== gameState) {
             if (game.state === 'game_ended') {
@@ -133,20 +155,10 @@ export default function Board(props) {
             changed = true;
        }
 
-         if (JSON.stringify(playedCards) !==  JSON.stringify(game.roundInfo.playedCards)) {
-            setPlayedCards(game.roundInfo.playedCards);
-                        //console.log('cards');
-            changed = true;
-       }
 
-        if (game.isNarrator !== isNarrator) {
-                    //console.log('narr');
-            setIsNarrator(game.isNarrator);
-            changed = true;
-        }
         if (game.roundInfo.phrase !== phrase) {
             setPhrase(game.roundInfo.phrase);
-            //console.log('phrase');
+            console.log('phrase');
             changed = true;
         }
         return changed;
@@ -199,39 +211,36 @@ export default function Board(props) {
 
   };
 
-  let socket = null;
-
-
-
   useEffect(() => {
     console.log('inside use effect');
 
     if (socket === null) {
 
-    socket = io(process.env.REACT_APP_API_URL);
+    let socket2 = io(process.env.REACT_APP_API_URL);
 
-      socket.on('connect', function() {
+      socket2.on('connect', function() {
         console.log("socket connected");
         //setIsConnected(true);
-        socket.emit('join', {room: gid});
+        socket2.emit('join', {room: gid});
     });
 
-    socket.on('disconnect', function() {
+    socket2.on('disconnect', function() {
         console.log("socket disconnected");
         //setIsConnected(false);
     });
 
-    socket.on("update", (data) => {
+    socket2.on("update", (data) => {
         const packet = JSON.parse(data);
         console.log("received game update: "+JSON.stringify(packet));
         updateState();
     });
+    setSocket(socket2);
 
     }
 
 
     return () => {
-    socket.close()
+    //socket.close()
       if (currTimeout) {
        clearTimeout(currTimeout);
        }
