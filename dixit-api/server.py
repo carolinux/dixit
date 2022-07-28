@@ -264,7 +264,7 @@ def games_resume_from_cookie():
 @socketio.on('join')
 def join_websocket(data):
     join_room(data['room'])
-    emit("update", json.dumps({"data": f"thank you for joining game {data['room']}"}))
+    emit("update", json.dumps({"data": f"Welcome to game {data['room']}"}))
 
 
 if __name__ == '__main__':

@@ -77,9 +77,11 @@ export default function Board(props) {
 
 
   const [players, setPlayers] = useState([]);
+  const [updateTime, setUpdateTime] = useState(null);
   const [gameState, setGameState] = useState('');
   const [cards, setCards] = useState([]); // cards in hand
   const [playedCards, setPlayedCards] = useState([]); // cards active in round
+  const [messages, setMessages] = useState([]);
   const [cardStatuses, setCardStatuses] = useState({}); //statuses of cards in round relative to player or players, depending on game state
   const [isNarrator, setIsNarrator] = useState(false);
   const [phrase, setPhrase] = useState('');
@@ -93,7 +95,7 @@ export default function Board(props) {
   const roundCompleted = true;
   const playerPlayed = false;
 
-  const updateFromApi = (game) => {
+  const updateFromApi = (game, message) => {
         setMainPlayer(game.player);
         setIsNarrator(game.isNarrator);
         setPlayedCards(game.roundInfo.playedCards);
@@ -113,6 +115,11 @@ export default function Board(props) {
         setPlayers(game.playerList);
         setCards(game.roundInfo.hand);
         setPhrase(game.roundInfo.phrase);
+        let messages2 = messages;
+        messages2.push(message);
+        console.log("Updated messages: "+messages2);
+        setMessages(messages2);
+        setUpdateTime(Date.now());
   }
 
   const transitionGame = (transition, transitionData) => {
@@ -136,13 +143,13 @@ export default function Board(props) {
   })
   };
 
-  const updateState = async () => {
+  const updateState = async (message) => {
     axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/' + gid)
      .then(resp => {
        console.log('call update at '+  new Date().toLocaleString());
        //console.log(resp.data.game);
        let game = resp.data.game;
-       let changed = updateFromApi(game);
+       let changed = updateFromApi(game, message);
        //console.log("changed "+changed);
       }
      )
@@ -160,49 +167,54 @@ export default function Board(props) {
   })
   };
 
- const connectSocket = () => {
-
-    if (socket === null || (socket && socket.readyState == 3)) {
-
-    let socket2 = io(process.env.REACT_APP_API_URL);
-
-      socket2.on('connect', function() {
-        console.log("socket connected");
-        //setIsConnected(true);
-        socket2.emit('join', {room: gid});
-    });
-
-    socket2.on('disconnect', function() {
-        console.error("socket disconnected, will attempt to reconnect in one second");
-        setTimeout(function() {
-          connectSocket();
-        }, 1000);
-    });
-
-     socket2.on("error", (err) => {
-        console.error('Socket encountered error: ', err.message, 'Closing socket');
-        socket2.close();
-    });
-
-    socket2.on("update", (data) => {
-        const packet = JSON.parse(data);
-        console.log("received game update: "+JSON.stringify(packet));
-        updateState();
-    });
-    setSocket(socket2);
-    }
-
- };
 
   useEffect(() => {
-    console.log('inside use effect');
+
+    console.log("Inside use effect: Game state="+gameState);
+
+     const connectSocket = () => {
+
+        if (socket === null || (socket && socket.readyState == 3)) {
+
+        let socket2 = io(process.env.REACT_APP_API_URL);
+
+          socket2.on('connect', function() {
+            console.log("socket connected");
+            //setIsConnected(true);
+            socket2.emit('join', {room: gid});
+        });
+
+        socket2.on('disconnect', function() {
+            console.error("socket disconnected, will attempt to reconnect in one second");
+            setTimeout(function() {
+              connectSocket();
+            }, 1000);
+        });
+
+         socket2.on("error", (err) => {
+            console.error('Socket encountered error: ', err.message, 'Closing socket');
+            socket2.close();
+        });
+
+        socket2.on("update", (data) => {
+            const packet = JSON.parse(data);
+            console.log("received game update: "+JSON.stringify(packet));
+            updateState(packet['data']);
+
+        });
+        setSocket(socket2);
+        }
+
+     };
+
+    console.log("Messages2 "+messages);
     connectSocket();
     return () => {
       if (currTimeout) {
        clearTimeout(currTimeout);
        }
     }
-  }, [gameState, players, cards, playedCards, isNarrator, phrase, cardStatuses, mainPlayer]); // call useeffect every time something changes
+  }, [updateTime]); // call useeffect every time something changes
 
 
 
@@ -261,6 +273,16 @@ export default function Board(props) {
         </Button>
         }
         </Grid>
+
+
+        <Grid item xs={2} sm={2}>
+            <div>
+            {messages.map(message =>  <li key={message}>  {message} </li>)}
+            </div>
+        </Grid>
+
+
+
       </Grid>
     </Container>
   );
