@@ -115,10 +115,11 @@ export default function Board(props) {
         setPlayers(game.playerList);
         setCards(game.roundInfo.hand);
         setPhrase(game.roundInfo.phrase);
-        let messages2 = messages;
-        messages2.push(message);
-        console.log("Updated messages: "+messages2);
-        setMessages(messages2);
+        if (message) {
+            let messages2 = messages;
+            messages2.push(message);
+            setMessages(messages2);
+        }
         setUpdateTime(Date.now());
   }
 
@@ -207,14 +208,13 @@ export default function Board(props) {
 
      };
 
-    console.log("Messages2 "+messages);
     connectSocket();
     return () => {
       if (currTimeout) {
        clearTimeout(currTimeout);
        }
     }
-  }, [updateTime]); // call useeffect every time something changes
+  }, [updateTime]); // call useeffect every time the game gets updated
 
 
 
