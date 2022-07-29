@@ -57,7 +57,25 @@ const useStyles = makeStyles(() => ({
 
    gridl : {
       borderLeft: '2px solid #6a3805',
+  },
+  message : {
+  border: '2px solid #dedede',
+  backgroundColor: '#f1f1f1',
+  borderRadius: '1px',
+  padding: '1px',
+  margin: '1px 0',
+  },
+ darker_message : {
+  borderColor: '#ccc',
+  backgroundColor: '#ddd',
+  borderRadius: '1px',
+  padding: '1px',
+  margin: '1px 0',
+  },
+  message_box : {
+    overflowY: 'auto',
   }
+
 }));
 
 export default function Board(props) {
@@ -205,7 +223,6 @@ export default function Board(props) {
         });
         setSocket(socket2);
         }
-
      };
 
     connectSocket();
@@ -261,6 +278,20 @@ export default function Board(props) {
         </Typography>
         </Grid>
 
+        <Grid item xs={2} sm={2}>
+            <div class={[classes.grid, classes.gridl,classes.message_box]}>
+            {messages.map((message, i) =>
+
+                <div class={i%2 == 0 ? classes.message: classes.darker_message}>
+
+                  <p>{message}</p>
+                </div>
+                )
+            }
+            </div>
+        </Grid>
+
+
 
         <Grid item xs={2} sm={2}>
 
@@ -275,11 +306,7 @@ export default function Board(props) {
         </Grid>
 
 
-        <Grid item xs={2} sm={2}>
-            <div>
-            {messages.map(message =>  <li key={message}>  {message} </li>)}
-            </div>
-        </Grid>
+
 
 
 
