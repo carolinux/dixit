@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, Fragment} from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
@@ -15,6 +15,9 @@ import revealSound from './assets/sounds/reveal.mp3'
 import phraseSound from './assets/sounds/phrase.mp3'
 import startSound from './assets/sounds/start.mp3'
 import { KeyboardArrowDown } from '@material-ui/icons';
+import ListItem from '@material-ui/core/ListItem';
+import List from '@material-ui/core/List';
+import Divider from '@material-ui/core/Divider';
 import io from 'socket.io-client';
 
 
@@ -73,7 +76,8 @@ const useStyles = makeStyles(() => ({
   margin: '1px 0',
   },
   message_box : {
-    overflowY: 'auto',
+    height: '200px',
+    overflowY: 'scroll',
   }
 
 }));
@@ -105,13 +109,14 @@ export default function Board(props) {
   const [phrase, setPhrase] = useState('');
   const [socket, setSocket] = useState(null);
 
-
-
-
   let currTimeout = undefined;
-
+  const messagesEndRef = useRef(null)
   const roundCompleted = true;
   const playerPlayed = false;
+
+  const scrollToBottom = () => {
+     messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+  }
 
   const updateFromApi = (game, message) => {
         setMainPlayer(game.player);
@@ -226,6 +231,7 @@ export default function Board(props) {
      };
 
     connectSocket();
+    scrollToBottom();
     return () => {
       if (currTimeout) {
        clearTimeout(currTimeout);
@@ -239,7 +245,7 @@ export default function Board(props) {
     <Container>
       <Grid container>
 
-         <Grid item xs={2} sm={2}  className={[classes.cardsPlayed, classes.grid, classes.gridtl]}  style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>
+         <Grid item sm={2}  className={[classes.cardsPlayed, classes.grid, classes.gridtl]}  style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>
        <Typography variant='h3' className={classes.title}>
           BOARD >
         </Typography>
@@ -257,43 +263,43 @@ export default function Board(props) {
         </Grid>
 
 
-        <Grid item xs={8} sm={10} className={[classes.cardsPlayed, classes.grid, classes.gridtr]}>
+        <Grid item sm={10} className={[classes.cardsPlayed, classes.grid, classes.gridtr]}>
            <CardsPlayed cards={playedCards} gameState={gameState} isNarrator={isNarrator} transitionGame={transitionGame}  cardStatuses={cardStatuses}/>
         </Grid>
 
-         <Grid item xs={12} sm={12} className={[classes.grid, classes.gridb]}>
+         <Grid item sm={12} className={[classes.grid, classes.gridb]}>
           <Phrase phrase={phrase}/>
         </Grid>
 
 
 
-        <Grid item xs={8} sm={10} className={[classes.grid, classes.cardsPlayed]}>
+        <Grid item sm={10} className={[classes.grid, classes.cardsPlayed]}>
           <Hand isNarrator={isNarrator} player={mainPlayer} cards={cards} transitionGame={transitionGame} gameState={gameState} cardStatuses={cardStatuses}/>
         </Grid>
 
-         <Grid item xs={2} sm={2} className={[classes.grid, classes.gridl, classes.cardsPlayed]} style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>
+         <Grid item sm={2} className={[classes.grid, classes.gridl, classes.cardsPlayed]} style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>
           <Players players={players}/>
-        <Typography variant='body2'>
-          There are {players.length} player(s) connected.
-        </Typography>
-        </Grid>
 
-        <Grid item xs={2} sm={2}>
-            <div class={[classes.grid, classes.gridl,classes.message_box]}>
+
+          <Typography variant='h4' className={classes.title}>
+            Events
+          </Typography>
+        <div className={classes.message_box}>
+        <List>
             {messages.map((message, i) =>
 
-                <div class={i%2 == 0 ? classes.message: classes.darker_message}>
-
-                  <p>{message}</p>
-                </div>
+              <Fragment><ListItem class={i%2 == 0 ? classes.message: classes.darker_message}>
+              {message}
+              </ListItem> <Divider /></Fragment>
                 )
             }
-            </div>
+        </List>
+       <div ref={messagesEndRef} />
+       </div>
+
         </Grid>
 
-
-
-        <Grid item xs={2} sm={2}>
+        <Grid item sm={2}>
 
         {gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
           {texts.stateTransitions.start}
@@ -304,11 +310,6 @@ export default function Board(props) {
         </Button>
         }
         </Grid>
-
-
-
-
-
 
       </Grid>
     </Container>

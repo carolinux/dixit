@@ -7,7 +7,7 @@ import SportsEsportsOutlinedIcon from '@material-ui/icons/SportsEsportsOutlined'
 import { ArrowBack, ArrowForward } from '@material-ui/icons';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
-import Divider from '@material-ui/core/Divider';
+
 
 const useStyles = makeStyles(() => ({
   players: {
@@ -44,7 +44,7 @@ export default function Players(props) {
       <ListItemIcon  className={player.isNarrator?classes.narrator:classes.players} ><SportsEsportsOutlinedIcon  style={{ fill: 'green' }}/></ListItemIcon>
       {player.name}: {player.score} {player.roundScore>0 && <span>(+{player.roundScore})</span> }
        {player.isNarrator && <ArrowBack style={{ fill: 'green' }}/>}
-    </ListItem> <Divider /></Fragment> )}
+    </ListItem></Fragment> )}
   </List>
   </Fragment>
   );

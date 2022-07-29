@@ -187,7 +187,7 @@ def games_start(gid):
     try:
         game.start()
         update_game(red, game)
-        socketio.emit('update', json.dumps({'data': "game started"}), room=gid)
+        socketio.emit('update', json.dumps({'data': "Game started"}), room=gid)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -208,7 +208,10 @@ def games_set_card(gid):
         else:
             game.set_decoy_card(player, card)
         update_game(red, game)
-        socketio.emit('update', json.dumps({'data': f"{player} chose their card."}), room=gid)
+        if phrase:
+            socketio.emit('update', json.dumps({'data': f"{player} chose their narrator card"}), room=gid)
+        else:
+            socketio.emit('update', json.dumps({'data': f"{player} chose their decoy card"}), room=gid)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -229,7 +232,7 @@ def games_vote_card(gid):
         game.cast_vote(player, card)
         print("after cast vote")
         update_game(red, game)
-        socketio.emit('update', json.dumps({'data': f"{player} cast their vote."}), room=gid)
+        socketio.emit('update', json.dumps({'data': f"{player} cast their vote"}), room=gid)
     except Exception as e:
         print(traceback.print_exc())
         flask.abort(400, str(e))
