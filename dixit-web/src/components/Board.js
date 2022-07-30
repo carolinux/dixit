@@ -4,6 +4,7 @@ import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import CardsPlayed from './CardsPlayed';
+import EventsLog from './EventsLog';
 import Hand from './Hand';
 import Players from './Players';
 import Phrase from './Phrase';
@@ -15,8 +16,6 @@ import revealSound from './assets/sounds/reveal.mp3'
 import phraseSound from './assets/sounds/phrase.mp3'
 import startSound from './assets/sounds/start.mp3'
 import { KeyboardArrowDown } from '@material-ui/icons';
-import ListItem from '@material-ui/core/ListItem';
-import List from '@material-ui/core/List';
 import Divider from '@material-ui/core/Divider';
 import io from 'socket.io-client';
 
@@ -61,25 +60,6 @@ const useStyles = makeStyles(() => ({
    gridl : {
       borderLeft: '2px solid #6a3805',
   },
-  message : {
-  border: '2px solid #dedede',
-  backgroundColor: '#f1f1f1',
-  borderRadius: '1px',
-  padding: '1px',
-  margin: '1px 0',
-  },
- darker_message : {
-  borderColor: '#ccc',
-  backgroundColor: '#ddd',
-  borderRadius: '1px',
-  padding: '1px',
-  margin: '1px 0',
-  },
-  message_box : {
-    height: '200px',
-    overflowY: 'scroll',
-  }
-
 }));
 
 export default function Board(props) {
@@ -97,7 +77,6 @@ export default function Board(props) {
   const audioPhrase = new Audio(phraseSound);
   const audioStart = new Audio(startSound);
 
-
   const [players, setPlayers] = useState([]);
   const [updateTime, setUpdateTime] = useState(null);
   const [gameState, setGameState] = useState('');
@@ -110,13 +89,7 @@ export default function Board(props) {
   const [socket, setSocket] = useState(null);
 
   let currTimeout = undefined;
-  const messagesEndRef = useRef(null)
-  const roundCompleted = true;
-  const playerPlayed = false;
-
-  const scrollToBottom = () => {
-     messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-  }
+  const messagesEndRef = useRef(null);
 
   const updateFromApi = (game, message) => {
         setMainPlayer(game.player);
@@ -229,15 +202,14 @@ export default function Board(props) {
         setSocket(socket2);
         }
      };
-
     connectSocket();
-    scrollToBottom();
+    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     return () => {
       if (currTimeout) {
        clearTimeout(currTimeout);
        }
     }
-  }, [updateTime]); // call useeffect every time the game gets updated
+  }, [updateTime]); // call useeffect every time the updateTime of the game changes
 
 
 
@@ -279,24 +251,7 @@ export default function Board(props) {
 
          <Grid item sm={2} className={[classes.grid, classes.gridl, classes.cardsPlayed]} style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>
           <Players players={players}/>
-
-
-          <Typography variant='h4' className={classes.title}>
-            Events
-          </Typography>
-        <div className={classes.message_box}>
-        <List>
-            {messages.map((message, i) =>
-
-              <Fragment><ListItem class={i%2 == 0 ? classes.message: classes.darker_message}>
-              {message}
-              </ListItem> <Divider /></Fragment>
-                )
-            }
-        </List>
-       <div ref={messagesEndRef} />
-       </div>
-
+          <EventsLog messages={messages} messagesEndRef={messagesEndRef}/>
         </Grid>
 
         <Grid item sm={2}>

@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState} from 'react';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { getTexts } from './resources/Texts';
