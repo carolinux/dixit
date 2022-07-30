@@ -30,7 +30,7 @@ export const getTexts = (props) => {
     },
     divider: '~',
     login: {
-      title: 'Choose a name & game to enter!',
+      title: 'Choose your name',
       question: 'What\'s your name?',
       join: 'Join!',
       create: 'Create New Game',
