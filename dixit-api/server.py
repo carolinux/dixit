@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 def shutdown():
     # save the game data :)
     recs = []
-    for  g in get_all_games(red):
+    for g in get_all_games(red):
         recs.append(g.to_json_lite())
     data = {'games': recs}
     fn = os.path.join("./game_data/export_{}.json".format(datetime.now().strftime("%Y%m%d_%H%M%S")))
@@ -57,8 +57,13 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/login/<gid>")
-def login(gid):
+@app.route("/create")
+def create():
+    return render_template("index.html")
+
+
+@app.route("/join/<gid>")
+def join(gid):
     return render_template("index.html")
 
 
@@ -90,7 +95,8 @@ def games_api():
         else:
             uid = game_id
             game = get_game_by_id(red, uid)
-
+            if game is None:
+                flask.abort(400, f"Game {uid} not found to join.")
         try:
             game.join(player_name)
             update_game(red, game)

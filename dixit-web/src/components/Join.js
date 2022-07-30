@@ -36,14 +36,17 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function Login(props) {
+export default function Join(props) {
+
+  const { preSelectedGid } = useParams();
 
   const texts = getTexts();
   const classes = useStyles();
   const [playerName, setPlayerName] = useState('');
   const [usedName, setUsedName] = useState(false);
   const [formError, setFormError] = useState(false);
-  const [gameId, setGameId] = useState('new')
+  const [gameId, setGameId] = useState(preSelectedGid);
+
   const axiosWithCookies = axios.create({
   withCredentials: true
 });
@@ -111,20 +114,11 @@ export default function Login(props) {
 
   }
 
-
   useEffect(() => {
     console.log('inside use effect');
     tryResumeFromCookie();
     return;
-  }, []); // call useeffect every time something changes
-
-
-
-
-
-
-  const updateGame = (gid) => setGameId(gid);
-
+  }, []);
 
   return (
     <Grid container className={classes.root} spacing={2}>
@@ -133,7 +127,7 @@ export default function Login(props) {
           <Grid item className={classes.paper}>
               <div className={classes.paper}>
                 <Typography variant='h4' className={classes.title}>
-                  {texts.login.title}
+                  Join game {preSelectedGid}
                 </Typography>
                 <Fragment>
                   <form noValidate autoComplete='off' className={classes.form}>
@@ -149,8 +143,9 @@ export default function Login(props) {
                       {texts.login.nameUsed}
                     </Typography>
                   }
+
                   <Button size='small' color='primary' onClick={addPlayer} className={classes.control}>
-                    {texts.login.create}
+                    {texts.login.join}
                   </Button>
                 </Fragment>
               </div>

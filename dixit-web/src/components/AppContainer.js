@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import Rules from './Rules';
 import About from './About';
 import Login from './Login';
+import Join from './Join';
 import Board from './Board';
 import Winners from './Winners';
 
@@ -11,8 +12,11 @@ function AppContainer(props) {
   return (
     <Router>
       <Switch>
-        <Route path='/login/:preSelectedGid'>
+        <Route path='/create'>
           <Login/>
+        </Route>
+        <Route path='/join/:preSelectedGid'>
+          <Join/>
         </Route>
         <Route path='/board/:gid/winners'>
           <Winners/>

@@ -251,6 +251,8 @@ class Game:
         return self.currentRound.get('narratorCard')
 
     def join(self, player_name):
+        if self.is_started():
+            raise Exception("Cannot join game that is already started.")
         if player_name in self.players:
             raise Exception("Player with name {} already in game {}.".format(player_name, self.id))
         if not player_name:
