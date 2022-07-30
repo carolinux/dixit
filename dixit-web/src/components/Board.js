@@ -177,7 +177,6 @@ export default function Board(props) {
 
           socket2.on('connect', function() {
             console.log("socket connected");
-            //setIsConnected(true);
             socket2.emit('join', {room: gid});
         });
 
@@ -209,7 +208,7 @@ export default function Board(props) {
        clearTimeout(currTimeout);
        }
     }
-  }, [updateTime]); // call useeffect every time the updateTime of the game changes
+  }, [updateTime]); // call useEffect every time the updateTime of the game changes
 
 
 
