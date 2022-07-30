@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import Rules from './Rules';
 import About from './About';
-import Login from './Login';
+import Create from './Create';
 import Join from './Join';
 import Board from './Board';
 import Winners from './Winners';
@@ -13,7 +13,7 @@ function AppContainer(props) {
     <Router>
       <Switch>
         <Route path='/create'>
-          <Login/>
+          <Create/>
         </Route>
         <Route path='/join/:preSelectedGid'>
           <Join/>

@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useEffect } from 'react';
+import React, { useState, Fragment } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { getTexts } from './resources/Texts';
 import axios from 'axios';
@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function Login(props) {
+export default function Create(props) {
 
   const texts = getTexts();
   const classes = useStyles();
@@ -95,36 +95,7 @@ export default function Login(props) {
     }
   }
 
-
-  const tryResumeFromCookie = () => {
-
-
-    axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/resume')
-      .then(res => {
-        console.log(res.data);
-        console.log("Resume?")
-        history.push('/board/'+res.data['game']);
-      })
-    .catch(function (error) {
-    console.log(error.toJSON());
-    })
-
-  }
-
-
-  useEffect(() => {
-    console.log('inside use effect');
-    tryResumeFromCookie();
-    return;
-  }, []); // call useeffect every time something changes
-
-
-
-
-
-
   const updateGame = (gid) => setGameId(gid);
-
 
   return (
     <Grid container className={classes.root} spacing={2}>

@@ -1,15 +1,12 @@
-import logging
-
 import flask
 from flask import Flask, request, jsonify, make_response, render_template
 from flask_socketio import SocketIO, emit, join_room
-#from flask_sock import Sock
 from flask_cors import CORS, cross_origin
 import redis
 
 from cute_ids import generate_cute_id
 from models import Game
-from datastore import get_game_by_id, get_all_games, add_game, update_game, get_locked_game_by_id, LockingException
+from datastore import get_game_by_id, get_all_games, add_game, update_game, get_locked_game_by_id, LockingException, release_lock
 import utils
 import conf
 import atexit
@@ -93,11 +90,16 @@ def games_api():
                 if added:
                     break
         else:
+            # logic to handle joining an existing game
             uid = game_id
             game = get_game_by_id(red, uid)
             if game is None:
                 flask.abort(400, f"Game {uid} not found to join.")
         try:
+            existing_joined_games = utils.get_games_from_cookie(request)
+            if uid in existing_joined_games:
+                # do not rejoin, silently re-direct the user to the board
+                return make_response(jsonify({"game": game.id}))
             game.join(player_name)
             update_game(red, game)
             socketio.emit('update', json.dumps({'data': f"Player {player_name} joined game {game.id}"}), room=game.id)
@@ -105,9 +107,7 @@ def games_api():
             print(e)
             flask.abort(400, str(e))
         resp = make_response(jsonify({"game": game.id}))
-        resp.set_cookie("player", player_name, httponly=True, samesite='Strict')
-        resp.set_cookie("gid", game.id, httponly=True, samesite='Strict')
-        resp.set_cookie("token", utils.create_token(player_name, game.id), httponly=True, samesite='Strict')
+        resp = utils.generate_response_with_jwt_token(request, resp, player_name, game.id)
         return resp
 
     else:
@@ -140,11 +140,15 @@ def games_status_api(gid):
 
 
 def get_authenticated_game_and_player_or_error(gid, request, lock=False):
-    intended_game = request.cookies.to_dict()['gid']
-    player = request.cookies.to_dict()['player']
-    if intended_game != gid:
-        # the game in the cookie is different than the one the request is trying to get info for
-        error = "Trying to get data for {} when the game the player is in is {}".format(gid, intended_game)
+    joined_games = request.cookies.to_dict()['gids'].split(',')
+    players = request.cookies.to_dict()['players'].split(',')
+    game_to_player = {}
+    for game, matching_player in zip(joined_games, players):
+        game_to_player[game] = matching_player
+
+    if gid not in joined_games:
+        # the game(s) in the cookie (maybe the user has joined multiple games) are ALL different than the one the request is trying to get info for
+        error = "Trying to get data for {} when the game the player is in is {}".format(gid, joined_games)
         print(error)
         flask.abort(403, error)
     if lock:
@@ -156,31 +160,12 @@ def get_authenticated_game_and_player_or_error(gid, request, lock=False):
     else:
         game = get_game_by_id(red, gid)
     if not game:
+        release_lock(red, gid)
         flask.abort(404)
+    player = game_to_player[gid]
     if not game.contains_player(player):
         error = "Player {} is not in game {}".format(player, gid)
-        print(error)
-        flask.abort(403, error)
-    return game, player
-
-
-def get_authenticated_game_and_player_or_error_for_resume(request):
-    intended_game = request.cookies.to_dict()['gid']
-    player = request.cookies.to_dict()['player']
-    game = get_game_by_id(red, intended_game)
-    if not game:
-        flask.abort(404)
-    if game.has_ended():
-        error = "Game {} has ended. Deleting cookie.".format(game.id)
-        print(error)
-        resp = make_response(error, 403)
-        resp.set_cookie("player", '', httponly=True, samesite='Strict', expires=0)
-        resp.set_cookie("gid", '', httponly=True, samesite='Strict', expires=0)
-        resp.set_cookie("token", '', httponly=True, samesite='Strict', expires=0)
-        flask.abort(resp)
-    if not game.contains_player(player):
-        error = "Player {} is not in game {}".format(player, intended_game)
-        print(error)
+        release_lock(red, gid)
         flask.abort(403, error)
     return game, player
 
@@ -260,14 +245,6 @@ def games_next_round(gid):
         flask.abort(400, str(e))
     game_data = game.serialize_for_status_view(player)
     return jsonify({"game": game_data})
-
-
-@app.route('/games/resume', methods=['GET'])
-@cross_origin()
-@utils.authenticate_with_cookie_token
-def games_resume_from_cookie():
-    game, player = get_authenticated_game_and_player_or_error_for_resume(request)
-    return jsonify({"game": game.id, 'player': player})
 
 
 @socketio.on('join')

@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useEffect } from 'react';
+import React, { useState, Fragment } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { getTexts } from './resources/Texts';
 import axios from 'axios';
@@ -59,7 +59,7 @@ export default function Join(props) {
     return;
   }
   joiningInProgress = true;
-  console.log("Adding player to game")
+  console.log("Adding player to game "+ gameId);
   console.log(playerName);
   console.log(gameId)
     if (formError) {
@@ -97,28 +97,6 @@ export default function Join(props) {
       setFormError(false);
     }
   }
-
-
-  const tryResumeFromCookie = () => {
-
-
-    axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/resume')
-      .then(res => {
-        console.log(res.data);
-        console.log("Resume?")
-        history.push('/board/'+res.data['game']);
-      })
-    .catch(function (error) {
-    console.log(error.toJSON());
-    })
-
-  }
-
-  useEffect(() => {
-    console.log('inside use effect');
-    tryResumeFromCookie();
-    return;
-  }, []);
 
   return (
     <Grid container className={classes.root} spacing={2}>

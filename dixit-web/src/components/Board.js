@@ -160,7 +160,7 @@ export default function Board(props) {
         history.push('/')
         return
     }
-    currTimeout = setTimeout(() => updateState(), 1000);
+    currTimeout = setTimeout(() => updateState(), 10000);
   })
   };
 
