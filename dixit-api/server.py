@@ -85,7 +85,7 @@ def games_api():
         if game_id == "new":
             while True:
                 uid = generate_cute_id()
-                game = Game(uid)
+                game = Game(uid, creator=player_name)
                 added = add_game(red, game)
                 if added:
                     break
@@ -159,7 +159,7 @@ def get_authenticated_game_and_player_or_error(gid, request, lock=False):
             flask.abort(400, error)
     else:
         game = get_game_by_id(red, gid)
-    if not game:
+    if not game or game.is_abandoned():
         release_lock(red, gid)
         flask.abort(404)
     player = game_to_player[gid]
@@ -245,6 +245,24 @@ def games_next_round(gid):
         flask.abort(400, str(e))
     game_data = game.serialize_for_status_view(player)
     return jsonify({"game": game_data})
+
+
+
+@app.route('/games/<gid>/abandon', methods=['PUT'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def abandon(gid):
+    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
+    try:
+        game.abandon(player)
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': "Game abandoned"}), room=gid)
+    except Exception as e:
+        print(e)
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
+
 
 
 @socketio.on('join')

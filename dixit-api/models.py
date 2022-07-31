@@ -10,6 +10,7 @@ WAITING_FOR_PLAYERS = "waiting_for_players"
 WAITING_FOR_VOTES = "waiting_for_votes"
 ROUND_REVEALED = "round_revealed"
 GAME_ENDED = "game_ended"
+GAME_ABANDONED = "game_abandoned"
 MIN_PLAYERS = 2  # for testing..
 MAX_PLAYERS = 6
 INITIAL_CARD_ALLOCATION = 6
@@ -29,6 +30,7 @@ class Game:
     narratorIdx: int
     cards: list
     currentState: str
+    creator: str
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -39,7 +41,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None, creator=None):
         if id is not None:
             self.id = id
         else:
@@ -76,13 +78,15 @@ class Game:
             self.currentState = currentState
         else:
             self.currentState = WAITING_TO_START
+        if creator is not None:
+            self.creator = creator
 
     def init_cards(self):
         return list(range(1, MAX_CARD + 1)) # <- for the medusa deck change... allow to choose deck?
 
     def create_playing_order(self):
         random.shuffle(self.cards)
-        #random.shuffle(self.players)# first one to join starts
+        random.shuffle(self.players)
 
     def is_started(self):
         return self.currentState != WAITING_TO_START
@@ -113,7 +117,7 @@ class Game:
 
         if player in self.players:
             return 'rejoin' # and the player state is up to date with game state... i suppose
-        elif len(self.players) < MAX_PLAYERS and not self.is_started():
+        elif len(self.players) < MAX_PLAYERS and not self.is_started() and not self.is_abandoned():
             return 'join'
         else:
             return "game_already_started"
@@ -127,19 +131,19 @@ class Game:
                  'roundScore': self.get_round_score(p)} for p in self.players]
 
     def get_score(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return 0
         else:
             return self.scores[player]
 
     def get_round_score(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return 0
         else:
             return self.currentRound['scores'].get(player, 0)
 
     def has_set_card(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return False
         if self.is_narrator(player):
             return self.currentRound.get("narratorCard") is not None
@@ -147,7 +151,7 @@ class Game:
             return self.currentRound.get("decoys", {}).get(player) is not None
 
     def has_voted(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return False
         if self.is_narrator(player):
             return False
@@ -162,7 +166,11 @@ class Game:
         data['playerList'] = self.get_player_info()
         data['roundInfo'] = self.get_round_info(player)
         data['isNarrator'] = self.is_narrator(player)
+        data['isCreator'] = self.is_creator(player)
         return data
+
+    def is_creator(self, player):
+        return player == self.creator
 
     def get_card_statuses(self, player):
         if self.currentState == WAITING_FOR_PLAYERS:
@@ -215,7 +223,7 @@ class Game:
             return self.players[self.narratorIdx]
 
     def get_round_info(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return {'idx': None, 'narrator': None, 'hand': [], 'playedCards': []}
         idx = len(self.sealedRounds) + 1
         phrase = self.currentRound.get('phrase', '')
@@ -250,7 +258,18 @@ class Game:
     def get_narrator_card(self):
         return self.currentRound.get('narratorCard')
 
+    def abandon(self, player_name):
+        if self.is_creator(player_name):
+            self.currentState = GAME_ABANDONED
+        else:
+            raise Exception("Cannot abandon game if not the creator!")
+
+    def is_abandoned(self):
+        return self.currentState == GAME_ABANDONED
+
     def join(self, player_name):
+        if self.is_abandoned():
+            raise Exception("Cannot join game that is abandoned.")
         if self.is_started():
             raise Exception("Cannot join game that is already started.")
         if player_name in self.players:

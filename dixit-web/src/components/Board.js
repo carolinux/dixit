@@ -85,6 +85,7 @@ export default function Board(props) {
   const [messages, setMessages] = useState([]);
   const [cardStatuses, setCardStatuses] = useState({}); //statuses of cards in round relative to player or players, depending on game state
   const [isNarrator, setIsNarrator] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
   const [phrase, setPhrase] = useState('');
   const [socket, setSocket] = useState(null);
 
@@ -106,6 +107,7 @@ export default function Board(props) {
                 audioPhrase.play()
             }
         }
+        setIsCreator(game.isCreator)
         setGameState(game.state);
         setCardStatuses(game.cardStatuses);
         setPlayers(game.playerList);
@@ -263,6 +265,11 @@ export default function Board(props) {
           {texts.stateTransitions.next}
         </Button>
         }
+        {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('abandon')} className={classes.control}>
+          {texts.stateTransitions.abandon}
+        </Button>
+        }
+
         </Grid>
 
       </Grid>
