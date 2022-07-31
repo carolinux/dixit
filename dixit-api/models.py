@@ -31,6 +31,7 @@ class Game:
     cards: list
     currentState: str
     creator: str
+    stats: dict
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -41,7 +42,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None, creator=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None, creator=None, stats=None):
         if id is not None:
             self.id = id
         else:
@@ -80,6 +81,12 @@ class Game:
             self.currentState = WAITING_TO_START
         if creator is not None:
             self.creator = creator
+        else:
+            self.creator = None
+        if stats is not None:
+            self.stats = stats
+        else:
+            self.stats = {}
 
     def init_cards(self):
         return list(range(1, MAX_CARD + 1)) # <- for the medusa deck change... allow to choose deck?
@@ -291,7 +298,7 @@ class Game:
             self.create_playing_order()
             self.advance_narrator()
             self.scores = {p:0 for p in self.players}
-
+            self.stats['tricksters'] = {p:0 for p in self.players}
             self.currentRound = {}
             self.currentRound['decoys'] = {}
             self.currentRound['votes'] = {}
@@ -354,6 +361,7 @@ class Game:
             if trickster not in scores:
                 scores[trickster] = 0
             scores[trickster] += votes
+            self.stats['tricksters'][trickster] += votes
 
         for p in self.players:
             self.scores[p] += scores.get(p, 0)
@@ -376,7 +384,7 @@ class Game:
         if len(self.sealedRounds) == 0:
             self.narratorIdx = 0
             return
-        self.narratorIdx+=1
+        self.narratorIdx += 1
         if self.narratorIdx == self.num():
             self.narratorIdx = 0
 
