@@ -23,14 +23,6 @@ app.config['SECRET_KEY'] = conf.secret_key
 app.config["DEBUG"] = True
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 25}
 socketio = SocketIO(app)
-#cors = CORS(app)
-# origins=["http://127.0.0.1:3000"], headers=['Content-Type'], expose_headers=['Access-Control-Allow-Origin'], supports_credentials=True
-#app.config['CORS_HEADERS'] = 'Content-Type'
-#app.config['CORS_SUPPORTS_CREDENTIALS'] = True
-#app.config['CORS_SUPPORTS_CREDENTIALS'] = True
-#app.config['CORS_ORIGINS'] = ["http://127.0.0.1:3000"]
-#app.config['CORS_EXPOSE_HEADERS'] = ['Access-Control-Allow-Origin']
-
 red = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
 logger = logging.getLogger(__name__)
 
@@ -70,7 +62,7 @@ def board(gid):
 
 
 @app.route("/board/<gid>/winners")
-def board_winners():
+def board_winners(gid):
     return render_template("index.html")
 
 ## End of React Routes ##

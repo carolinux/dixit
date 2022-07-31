@@ -143,16 +143,15 @@ export default function Hand(props) {
         closeDialog();
         playedData = { ...playedData, phrase: phrase }
         transitionGame('set', playedData);
+        setPhrase(''); // so as to reset for next round
       } else {
         setFormError(true);
       }
 
     }
     else {
-
        closeDialog();
        transitionGame('set', playedData);
-       // todo - somehow - update prompt..
     }
 
   }

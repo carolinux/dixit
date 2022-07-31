@@ -297,8 +297,8 @@ class Game:
             #self.sealedStates.append(self.currentState)
             self.create_playing_order()
             self.advance_narrator()
-            self.scores = {p:0 for p in self.players}
-            self.stats['tricksters'] = {p:0 for p in self.players}
+            self.scores = {p: 0 for p in self.players}
+            self.stats['tricksters'] = {p: 0 for p in self.players}
             self.currentRound = {}
             self.currentRound['decoys'] = {}
             self.currentRound['votes'] = {}
@@ -423,7 +423,7 @@ class Game:
         for _ in medals:
             if sorted_scores:
                 player, score = sorted_scores.pop()
-                self.winners.append({'player': player, 'score': score})
+                self.winners.append({'player': player, 'score': score, 'tricksterScore': self.stats['tricksters'][player]})
         self.currentState = GAME_ENDED
         return True
 

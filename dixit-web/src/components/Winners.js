@@ -52,6 +52,7 @@ export default function Winners() {
        if (!options) {
 
        let newOptions = JSON.parse(JSON.stringify(optionsTemplate));
+
         // rearrange the podium to be silver-gold-bronze
         let first = game.winners[0];
         game.winners[0] = game.winners[1];

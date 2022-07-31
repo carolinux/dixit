@@ -58,5 +58,3 @@ def add_game(cli, g: Game) -> bool:
 def update_game(cli, g: Game):
     cli.hset("games", g.id, g.to_json())
     release_lock(cli, g.id)
-
-
