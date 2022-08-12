@@ -15,7 +15,7 @@ def authenticate_with_cookie_token(f):
         if not token:
             flask.abort(401)
         try:
-            data = jwt.decode(token, conf.secret_key, algorithms=["HS256"])
+            data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
         except Exception as e:  # signature has expired or payload not correctly signed
             print(e)
             flask.abort(403, str(e))
@@ -26,7 +26,7 @@ def authenticate_with_cookie_token(f):
 def create_token(player_names, gids, expiration_date):
     """The token contains two parallel lists of player_names, game_ids for the nickname the player has chosen for each game they have participated."""
     return jwt.encode({'players': player_names, 'gids': gids, 'exp': expiration_date},
-                       conf.secret_key, algorithm="HS256")
+                      conf.SECRET_KEY, algorithm="HS256")
 
 
 def get_games_from_cookie(request):
@@ -34,7 +34,7 @@ def get_games_from_cookie(request):
     token = cookies.get('token')
     if token is None:
         return []
-    data = jwt.decode(token, conf.secret_key, algorithms=["HS256"])
+    data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
     return data.get('gids', [])
 
 
@@ -51,7 +51,7 @@ def generate_response_with_jwt_token(request, response, player_name, gid):
         response.set_cookie("token", create_token(player_name, gid, expiration_date=expiration_date), httponly=True, samesite='Strict', expires=expiration_date)
     else:
         token = cookies.get('token')
-        data = jwt.decode(token, conf.secret_key, algorithms=["HS256"])
+        data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
         existing_names = data.get('players')
         existing_games = data.get('gids')
         new_names = existing_names + ',' + player_name

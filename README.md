@@ -67,6 +67,7 @@ to install the dependencies. Run it again whenever the dependencies change in th
 
 ## Run app locally
 
+
 `bash startlocal.sh` -- starts the game at http://0.0.0.0:8000
 `bash startlocal.sh --rebuild-react` -- to rebuild the react frontend
 
@@ -76,6 +77,7 @@ Have fun playing different players from different browsers.
 ## Run in production
 
 ### One offs
+- In `dixit-api` folder, copy `.env.example` into `.env` and replace the secret key value.
 - Configure the domain name dixit.lucidcode.ch to point to the IP of the production server
 
 - Install the SSL certificate on the production server by following the instructions here: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal

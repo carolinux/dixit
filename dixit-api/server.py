@@ -19,7 +19,7 @@ import os
 app = Flask(__name__, static_url_path='',
             static_folder='react_build',
             template_folder='react_build')
-app.config['SECRET_KEY'] = conf.secret_key
+app.config['SECRET_KEY'] = conf.SECRET_KEY
 app.config["DEBUG"] = True
 app.config['SOCK_SERVER_OPTIONS'] = {'ping_interval': 25}
 socketio = SocketIO(app)
