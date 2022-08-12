@@ -121,19 +121,16 @@ def creds(response):
 @app.route('/games/<gid>', methods=['GET'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
-def games_status_api(gid):
-    if request.method == "GET":
-        ### verify that game exists and current request is allowed to get its general state and their personal data ###
-        game, player = get_authenticated_game_and_player_or_error(gid, request)
-        ### end verify ###
-        game_data = game.serialize_for_status_view(player)
-        # get the public state
-        return jsonify({"game": game_data})
+def games_status_api(gid, jwt_data=None):
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data)
+    game_data = game.serialize_for_status_view(player)
+    # get the public state
+    return jsonify({"game": game_data})
 
 
-def get_authenticated_game_and_player_or_error(gid, request, lock=False):
-    joined_games = request.cookies.to_dict()['gids'].split(',')
-    players = request.cookies.to_dict()['players'].split(',')
+def get_authenticated_game_and_player_or_error(gid, jwt_data, lock=False):
+    joined_games = jwt_data['gids'].split(',')
+    players = jwt_data['players'].split(',')
     game_to_player = {}
     for game, matching_player in zip(joined_games, players):
         game_to_player[game] = matching_player
@@ -165,8 +162,8 @@ def get_authenticated_game_and_player_or_error(gid, request, lock=False):
 @app.route('/games/<gid>/start', methods=['PUT'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
-def games_start(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
+def games_start(gid, jwt_data=None):
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         game.start()
         update_game(red, game)
@@ -181,8 +178,8 @@ def games_start(gid):
 @app.route('/games/<gid>/set', methods=['PUT'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
-def games_set_card(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
+def games_set_card(gid, jwt_data=None):
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         card = request.json['card']
         phrase = request.json.get('phrase')
@@ -205,11 +202,9 @@ def games_set_card(gid):
 @app.route('/games/<gid>/vote', methods=['PUT'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
-def games_vote_card(gid):
+def games_vote_card(gid, jwt_data=None):
     import traceback
-    print('before getting game')
-    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
-    print("after getting game")
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         card = request.json['vote']  # this is the 'string' of the card
         game.cast_vote(player, card)
@@ -226,8 +221,8 @@ def games_vote_card(gid):
 @app.route('/games/<gid>/next', methods=['PUT'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
-def games_next_round(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
+def games_next_round(gid, jwt_data=None):
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         game.start_next_round()
         update_game(red, game)
@@ -243,8 +238,8 @@ def games_next_round(gid):
 @app.route('/games/<gid>/abandon', methods=['PUT'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
-def abandon(gid):
-    game, player = get_authenticated_game_and_player_or_error(gid, request, lock=True)
+def abandon(gid, jwt_data=None):
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         game.abandon(player)
         update_game(red, game)

@@ -161,6 +161,13 @@ export default function Hand(props) {
     setPhrase(value);
   }
 
+  const handleKeyPress = (event) => {
+  /* allow submitting card by pressing enter in the dialog */
+  if (event.key == 'Enter') {
+    event.preventDefault();
+    selectCard();
+  }
+};
 
   return (
     <Fragment>
@@ -193,7 +200,7 @@ export default function Hand(props) {
           { isNarrator &&
             <DialogContent>
               <DialogContentText>
-                <TextField onChange={addPhrase} fullWidth
+                <TextField onChange={addPhrase} onKeyPress={handleKeyPress} fullWidth
                   helperText='Describe your card!'
                   error={formError}
                 />

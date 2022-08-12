@@ -265,11 +265,21 @@ export default function Board(props) {
           {texts.stateTransitions.next}
         </Button>
         }
+
+        </Grid>
+        <Grid item sm={2}>
+        </Grid>
+        <Grid item sm={2}>
+        </Grid>
+        <Grid item sm={2}>
+        </Grid>
+        <Grid item sm={2}>
+        </Grid>
+        <Grid item sm={2}>
         {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('abandon')} className={classes.control}>
           {texts.stateTransitions.abandon}
         </Button>
         }
-
         </Grid>
 
       </Grid>

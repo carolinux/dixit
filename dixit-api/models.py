@@ -29,6 +29,7 @@ class Game:
     scores: dict
     narratorIdx: int
     cards: list
+    discards: list
     currentState: str
     creator: str
     stats: dict
@@ -42,7 +43,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, currentState=None, creator=None, stats=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None):
         if id is not None:
             self.id = id
         else:
@@ -75,6 +76,10 @@ class Game:
             self.cards = cards
         else:
             self.cards = self.init_cards()
+        if discards is not None:
+            self.discards = discards
+        else:
+            self.discards = []
         if currentState is not None:
             self.currentState = currentState
         else:
@@ -88,8 +93,9 @@ class Game:
         else:
             self.stats = {}
 
-    def init_cards(self):
-        return list(range(1, MAX_CARD + 1)) # <- for the medusa deck change... allow to choose deck?
+    def init_cards(self, deck_name=None):
+        # TODO: allow to choose different deck name
+        return list(range(1, MAX_CARD + 1))
 
     def create_playing_order(self):
         random.shuffle(self.cards)
@@ -107,8 +113,8 @@ class Game:
         for _ in range(card_allocation):
             for player in self.players:
                 if len(self.cards) == 0:
-                    # we ran out of new cards -- wrap around and reshuffle
-                    self.cards = self.init_cards() # FIXME: this allows the player to get a card that is in another player's deck as their card (duplicates!). Although this has never visibly happened! Need to keep a usedcards data structure.
+                    self.cards = self.discards
+                    self.discards = []
                     random.shuffle(self.cards)
                 card = self.cards.pop()
                 if player not in allocations:
@@ -294,7 +300,6 @@ class Game:
         elif len(self.players) < MIN_PLAYERS or len(self.players) > MAX_PLAYERS:
             raise Exception("Need to have between {} and {} players".format(MIN_PLAYERS, MAX_PLAYERS))
         else:
-            #self.sealedStates.append(self.currentState)
             self.create_playing_order()
             self.advance_narrator()
             self.scores = {p: 0 for p in self.players}
@@ -308,9 +313,11 @@ class Game:
 
     def set_narrator_card(self, player, card, phrase):
         if not self.is_narrator(player):
-            raise Exception("Trying to set card without being narrator {}, {}".format(player, self.get_narrator()))
+            raise Exception("Trying to set card without being narrator player: {}, narrator: {}".format(player, self.get_narrator()))
         if self.currentState != WAITING_FOR_NARRATOR:
             raise Exception("Trying to set card at an invalid point in the game")
+        if card not in self.currentRound['allocations'].get(player, []):
+            raise Exception("Trying to play a card that the narrator doesn't actually own.")
         self.currentRound['phrase'] = phrase
         self.currentRound['narratorCard'] = card
         self.currentRound['allocations'][player].remove(card)
@@ -321,10 +328,12 @@ class Game:
             raise Exception("Trying to set decoy card while being narrator")
         if self.currentState != WAITING_FOR_PLAYERS:
             raise Exception("Trying to set card at an invalid point in the game")
+        if card not in self.currentRound['allocations'].get(player, []):
+            raise Exception("Trying to play a card that the player doesn't actually own.")
 
         self.currentRound['decoys'][player] = card
-        self.currentRound['allocations'][player].remove(card) # FIXME: here will crash if somebody maliciously sends a random card
-        if len(self.currentRound['decoys']) == len(self.players) -1:
+        self.currentRound['allocations'][player].remove(card)
+        if len(self.currentRound['decoys']) == len(self.players) - 1:
             self.currentRound['allCards'] = [self.currentRound['narratorCard']] + list(self.currentRound['decoys'].values())
             random.shuffle(self.currentRound['allCards']);
             self.currentState = WAITING_FOR_VOTES
@@ -398,13 +407,15 @@ class Game:
             return
 
         self.advance_narrator()
-
         self.currentRound = {}
         self.currentRound['decoys'] = {}
         self.currentRound['votes'] = {}
         self.currentRound['scores'] = {}
+        self.update_discard_pile(self.sealedRounds[-1])
         self.allocate_cards(SUBSEQUENT_CARD_ALLOCATION)
         self.currentState = WAITING_FOR_NARRATOR
+    def update_discard_pile(self, round):
+        self.discards.extend(round['allCards'])
 
     def end(self):
         if self.currentState != ROUND_REVEALED:
