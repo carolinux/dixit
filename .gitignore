@@ -5,4 +5,5 @@ dixit-api/react_build
 dixit-web/build
 dixit-web/node_modules
 certs
+dixit-api/.env
 .idea
