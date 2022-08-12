@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect } from 'react';
+import React, { Fragment, useState} from 'react';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { getTexts } from './resources/Texts';
@@ -143,16 +143,15 @@ export default function Hand(props) {
         closeDialog();
         playedData = { ...playedData, phrase: phrase }
         transitionGame('set', playedData);
+        setPhrase(''); // so as to reset for next round
       } else {
         setFormError(true);
       }
 
     }
     else {
-
        closeDialog();
        transitionGame('set', playedData);
-       // todo - somehow - update prompt..
     }
 
   }
@@ -162,6 +161,13 @@ export default function Hand(props) {
     setPhrase(value);
   }
 
+  const handleKeyPress = (event) => {
+  /* allow submitting card by pressing enter in the dialog */
+  if (event.key == 'Enter') {
+    event.preventDefault();
+    selectCard();
+  }
+};
 
   return (
     <Fragment>
@@ -194,7 +200,7 @@ export default function Hand(props) {
           { isNarrator &&
             <DialogContent>
               <DialogContentText>
-                <TextField onChange={addPhrase} fullWidth
+                <TextField onChange={addPhrase} onKeyPress={handleKeyPress} fullWidth
                   helperText='Describe your card!'
                   error={formError}
                 />

@@ -21,7 +21,7 @@ export const getTexts = (props) => {
     },
     rules: {
       title: 'How to play Dixit',
-      play: 'Play!',
+      play: 'Create new game',
       description: 'Somebody will explain to you. Enjoy the game!',
     },
     about: {
@@ -30,9 +30,10 @@ export const getTexts = (props) => {
     },
     divider: '~',
     login: {
-      title: 'Choose a name & game to enter!',
+      title: 'Choose your name',
       question: 'What\'s your name?',
-      ready: 'I\'m ready!',
+      join: 'Join!',
+      create: 'Create New Game',
       nameUsed: 'Someone is using already this name...',
       fullGame: 'The game is full...'
     },
@@ -46,7 +47,8 @@ export const getTexts = (props) => {
     },
     stateTransitions: {
       start: 'Start the first round!',
-      next: 'Start the next round!'
+      next: 'Start the next round!',
+      abandon: 'Abandon game...'
 
     }
   }

@@ -40,7 +40,7 @@ export default function Rules() {
         {texts.rules.description}
       </Typography>
       <Typography variant='h6' className={classes.control}>
-        <a href='/login/new'>{texts.rules.play}</a>
+        <a href='/create'>{texts.rules.play}</a>
       </Typography>
     </Paper>
   );

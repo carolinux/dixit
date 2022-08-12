@@ -1,4 +1,4 @@
-import React, { useState, Fragment, useEffect } from 'react';
+import React, { useState, Fragment } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { getTexts } from './resources/Texts';
 import axios from 'axios';
@@ -6,7 +6,6 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import GameSelector from './GameSelector';
 import { useHistory, useParams } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
@@ -37,17 +36,17 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-export default function Login(props) {
+export default function Join(props) {
 
   const { preSelectedGid } = useParams();
-
 
   const texts = getTexts();
   const classes = useStyles();
   const [playerName, setPlayerName] = useState('');
   const [usedName, setUsedName] = useState(false);
   const [formError, setFormError] = useState(false);
-  const [gameId, setGameId] = useState('new')
+  const [gameId, setGameId] = useState(preSelectedGid);
+
   const axiosWithCookies = axios.create({
   withCredentials: true
 });
@@ -60,7 +59,7 @@ export default function Login(props) {
     return;
   }
   joiningInProgress = true;
-  console.log("Adding player to game")
+  console.log("Adding player to game "+ gameId);
   console.log(playerName);
   console.log(gameId)
     if (formError) {
@@ -99,38 +98,6 @@ export default function Login(props) {
     }
   }
 
-
-  const tryResumeFromCookie = () => {
-
-
-    axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/resume')
-      .then(res => {
-        console.log(res.data);
-        console.log("Resume?")
-        history.push('/board/'+res.data['game']);
-      })
-    .catch(function (error) {
-    console.log(error.toJSON());
-    })
-
-  }
-
-
-  useEffect(() => {
-    console.log('inside use effect');
-    tryResumeFromCookie();
-    updateGame(preSelectedGid);
-    return;
-  }, []); // call useeffect every time something changes
-
-
-
-
-
-
-  const updateGame = (gid) => setGameId(gid);
-
-
   return (
     <Grid container className={classes.root} spacing={2}>
       <Grid item xs={12}>
@@ -138,7 +105,7 @@ export default function Login(props) {
           <Grid item className={classes.paper}>
               <div className={classes.paper}>
                 <Typography variant='h4' className={classes.title}>
-                  {texts.login.title}
+                  Join game {preSelectedGid}
                 </Typography>
                 <Fragment>
                   <form noValidate autoComplete='off' className={classes.form}>
@@ -154,10 +121,9 @@ export default function Login(props) {
                       {texts.login.nameUsed}
                     </Typography>
                   }
-                <GameSelector playerName={playerName} updateGame={updateGame} preSelectedGid={preSelectedGid}/>
 
                   <Button size='small' color='primary' onClick={addPlayer} className={classes.control}>
-                    {texts.login.ready}
+                    {texts.login.join}
                   </Button>
                 </Fragment>
               </div>

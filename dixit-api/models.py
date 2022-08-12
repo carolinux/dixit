@@ -1,5 +1,6 @@
-from collections import defaultdict
+from dataclasses import dataclass, asdict
 import random
+import json
 from uuid import uuid4
 from copy import copy
 
@@ -9,39 +10,96 @@ WAITING_FOR_PLAYERS = "waiting_for_players"
 WAITING_FOR_VOTES = "waiting_for_votes"
 ROUND_REVEALED = "round_revealed"
 GAME_ENDED = "game_ended"
-MIN_PLAYERS = 2 # for testing..
+GAME_ABANDONED = "game_abandoned"
+MIN_PLAYERS = 2  # for testing..
 MAX_PLAYERS = 6
 INITIAL_CARD_ALLOCATION = 6
 SUBSEQUENT_CARD_ALLOCATION = 1
 WIN_SCORE = 36
-MAX_CARD = 110
+MAX_CARD = 122
 
 
-# TODO: persistent storage !!
+@dataclass
+class Game:
+    id: str
+    currentRound: dict
+    sealedRounds: list
+    players: list
+    winners: list
+    scores: dict
+    narratorIdx: int
+    cards: list
+    discards: list
+    currentState: str
+    creator: str
+    stats: dict
 
+    @staticmethod
+    def from_json(json_str: str) -> 'Game':
+        d = json.loads(json_str)
+        return Game(**d)
 
-class Game(object):
+    def to_json(self) -> str:
+        d = asdict(self)
+        return json.dumps(d)
 
-    def __init__(self, id=None):
-        if id:
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None):
+        if id is not None:
             self.id = id
         else:
             self.id = uuid4()
-        self.currentRound = {}
-        self.sealedRounds = []
-        self.players = []
-        self.winners = []
-        self.scores = {}
-        self.narratorIdx = None
-        self.cards = self.init_cards()
-        self.currentState = WAITING_TO_START
+        if currentRound is not None:
+            self.currentRound = currentRound
+        else:
+            self.currentRound = {}
+        if sealedRounds is not None:
+            self.sealedRounds = sealedRounds
+        else:
+            self.sealedRounds = []
+        if players is not None:
+            self.players = players
+        else:
+            self.players = []
+        if winners is not None:
+            self.winners = winners
+        else:
+            self.winners = []
+        if scores is not None:
+            self.scores = scores
+        else:
+            self.scores = {}
+        if narratorIdx is not None:
+            self.narratorIdx = narratorIdx
+        else:
+            self.narratorIdx = None
+        if cards is not None:
+            self.cards = cards
+        else:
+            self.cards = self.init_cards()
+        if discards is not None:
+            self.discards = discards
+        else:
+            self.discards = []
+        if currentState is not None:
+            self.currentState = currentState
+        else:
+            self.currentState = WAITING_TO_START
+        if creator is not None:
+            self.creator = creator
+        else:
+            self.creator = None
+        if stats is not None:
+            self.stats = stats
+        else:
+            self.stats = {}
 
-    def init_cards(self):
-        return list(range(1, MAX_CARD + 1)) # <- for the medusa deck change... allow to choose deck?
+    def init_cards(self, deck_name=None):
+        # TODO: allow to choose different deck name
+        return list(range(1, MAX_CARD + 1))
 
     def create_playing_order(self):
         random.shuffle(self.cards)
-        #random.shuffle(self.players)# first one to join starts
+        random.shuffle(self.players)
 
     def is_started(self):
         return self.currentState != WAITING_TO_START
@@ -55,8 +113,8 @@ class Game(object):
         for _ in range(card_allocation):
             for player in self.players:
                 if len(self.cards) == 0:
-                    # we ran out of new cards -- wrap around and reshuffle
-                    self.cards = self.init_cards() # FIXME: this allows the player to get a card that is in another player's deck as their card (duplicates!). Although this has never visibly happened! Need to keep a usedcards data structure.
+                    self.cards = self.discards
+                    self.discards = []
                     random.shuffle(self.cards)
                 card = self.cards.pop()
                 if player not in allocations:
@@ -72,7 +130,7 @@ class Game(object):
 
         if player in self.players:
             return 'rejoin' # and the player state is up to date with game state... i suppose
-        elif len(self.players) < MAX_PLAYERS and not self.is_started():
+        elif len(self.players) < MAX_PLAYERS and not self.is_started() and not self.is_abandoned():
             return 'join'
         else:
             return "game_already_started"
@@ -85,37 +143,33 @@ class Game(object):
                  'hasSetCard': self.has_set_card(p), 'score': self.get_score(p),
                  'roundScore': self.get_round_score(p)} for p in self.players]
 
-
     def get_score(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return 0
         else:
             return self.scores[player]
 
-
     def get_round_score(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return 0
         else:
             return self.currentRound['scores'].get(player, 0)
 
     def has_set_card(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return False
         if self.is_narrator(player):
             return self.currentRound.get("narratorCard") is not None
         else:
             return self.currentRound.get("decoys", {}).get(player) is not None
 
-
     def has_voted(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return False
         if self.is_narrator(player):
             return False
         else:
             return self.currentRound.get("votes", {}).get(player) is not None
-
 
     def serialize_for_status_view(self, player):
         data = self.serialize_for_list_view()
@@ -125,7 +179,11 @@ class Game(object):
         data['playerList'] = self.get_player_info()
         data['roundInfo'] = self.get_round_info(player)
         data['isNarrator'] = self.is_narrator(player)
+        data['isCreator'] = self.is_creator(player)
         return data
+
+    def is_creator(self, player):
+        return player == self.creator
 
     def get_card_statuses(self, player):
         if self.currentState == WAITING_FOR_PLAYERS:
@@ -178,7 +236,7 @@ class Game(object):
             return self.players[self.narratorIdx]
 
     def get_round_info(self, player):
-        if not self.is_started():
+        if not self.is_started() or self.is_abandoned():
             return {'idx': None, 'narrator': None, 'hand': [], 'playedCards': []}
         idx = len(self.sealedRounds) + 1
         phrase = self.currentRound.get('phrase', '')
@@ -213,14 +271,20 @@ class Game(object):
     def get_narrator_card(self):
         return self.currentRound.get('narratorCard')
 
-    ## state transitions from here on -- need to be locked in teh future ##
-    # strictly speaking: start and next can be problematic if called at the same time by multiple people
-    # because they would end up in re-allocating the cards (so there may be a card that appears and gets replaced)
-    # (could possibly get solved by shuffling with specific seed ? not really)
-    # join also may end up with 7 players for example
-    # other stuff just does double work if called in parallel
+    def abandon(self, player_name):
+        if self.is_creator(player_name):
+            self.currentState = GAME_ABANDONED
+        else:
+            raise Exception("Cannot abandon game if not the creator!")
+
+    def is_abandoned(self):
+        return self.currentState == GAME_ABANDONED
 
     def join(self, player_name):
+        if self.is_abandoned():
+            raise Exception("Cannot join game that is abandoned.")
+        if self.is_started():
+            raise Exception("Cannot join game that is already started.")
         if player_name in self.players:
             raise Exception("Player with name {} already in game {}.".format(player_name, self.id))
         if not player_name:
@@ -236,12 +300,10 @@ class Game(object):
         elif len(self.players) < MIN_PLAYERS or len(self.players) > MAX_PLAYERS:
             raise Exception("Need to have between {} and {} players".format(MIN_PLAYERS, MAX_PLAYERS))
         else:
-            #self.sealedStates.append(self.currentState)
             self.create_playing_order()
             self.advance_narrator()
-            self.scores = {p:0 for p in self.players}
-
-
+            self.scores = {p: 0 for p in self.players}
+            self.stats['tricksters'] = {p: 0 for p in self.players}
             self.currentRound = {}
             self.currentRound['decoys'] = {}
             self.currentRound['votes'] = {}
@@ -251,9 +313,11 @@ class Game(object):
 
     def set_narrator_card(self, player, card, phrase):
         if not self.is_narrator(player):
-            raise Exception("Trying to set card without being narrator {}, {}".format(player, self.get_narrator()))
+            raise Exception("Trying to set card without being narrator player: {}, narrator: {}".format(player, self.get_narrator()))
         if self.currentState != WAITING_FOR_NARRATOR:
             raise Exception("Trying to set card at an invalid point in the game")
+        if card not in self.currentRound['allocations'].get(player, []):
+            raise Exception("Trying to play a card that the narrator doesn't actually own.")
         self.currentRound['phrase'] = phrase
         self.currentRound['narratorCard'] = card
         self.currentRound['allocations'][player].remove(card)
@@ -264,29 +328,31 @@ class Game(object):
             raise Exception("Trying to set decoy card while being narrator")
         if self.currentState != WAITING_FOR_PLAYERS:
             raise Exception("Trying to set card at an invalid point in the game")
+        if card not in self.currentRound['allocations'].get(player, []):
+            raise Exception("Trying to play a card that the player doesn't actually own.")
 
         self.currentRound['decoys'][player] = card
-        self.currentRound['allocations'][player].remove(card) # FIXME: here will crash if somebody maliciously sends a random card
-        if len(self.currentRound['decoys']) == len(self.players) -1:
+        self.currentRound['allocations'][player].remove(card)
+        if len(self.currentRound['decoys']) == len(self.players) - 1:
             self.currentRound['allCards'] = [self.currentRound['narratorCard']] + list(self.currentRound['decoys'].values())
             random.shuffle(self.currentRound['allCards']);
             self.currentState = WAITING_FOR_VOTES
 
     def set_scores(self):
-        scores = defaultdict(lambda:0)
+        scores = {}
         votes = self.currentRound['votes']
-        votes_to_card = defaultdict(lambda:0)
+        votes_to_card = {}
         card_to_player = {}
         for player, card in votes.items():
+            if card not in votes_to_card:
+                votes_to_card[card] = 0
             votes_to_card[card] += 1
 
         # for the extra pointz
         for player, card in self.currentRound['decoys'].items():
             card_to_player[card] = player
 
-        correct_votes = votes_to_card[self.get_narrator_card()]
-
-
+        correct_votes = votes_to_card.get(self.get_narrator_card(), 0)
         if 0 < correct_votes < self.num() - 1:
             scores[self.get_narrator()] = 3
             for p in self.get_non_narrators():
@@ -300,11 +366,14 @@ class Game(object):
         for card, votes in votes_to_card.items():
             if card == self.get_narrator_card():
                 continue
-            scores[card_to_player[card]]+=votes
-
+            trickster = card_to_player[card]
+            if trickster not in scores:
+                scores[trickster] = 0
+            scores[trickster] += votes
+            self.stats['tricksters'][trickster] += votes
 
         for p in self.players:
-            self.scores[p] += scores[p]
+            self.scores[p] += scores.get(p, 0)
         self.currentRound['scores'] = scores
 
     def cast_vote(self, player, card):
@@ -324,7 +393,7 @@ class Game(object):
         if len(self.sealedRounds) == 0:
             self.narratorIdx = 0
             return
-        self.narratorIdx+=1
+        self.narratorIdx += 1
         if self.narratorIdx == self.num():
             self.narratorIdx = 0
 
@@ -338,13 +407,15 @@ class Game(object):
             return
 
         self.advance_narrator()
-
         self.currentRound = {}
         self.currentRound['decoys'] = {}
         self.currentRound['votes'] = {}
         self.currentRound['scores'] = {}
+        self.update_discard_pile(self.sealedRounds[-1])
         self.allocate_cards(SUBSEQUENT_CARD_ALLOCATION)
         self.currentState = WAITING_FOR_NARRATOR
+    def update_discard_pile(self, round):
+        self.discards.extend(round['allCards'])
 
     def end(self):
         if self.currentState != ROUND_REVEALED:
@@ -358,26 +429,19 @@ class Game(object):
 
         medals = ['gold', 'silver', 'bronze']
 
-        sorted_scores = sorted(self.scores.items(), key=lambda x:x[1])
+        sorted_scores = sorted(self.scores.items(), key=lambda x: x[1])
 
         for _ in medals:
             if sorted_scores:
                 player, score = sorted_scores.pop()
-                self.winners.append({'player': player, 'score': score})
+                self.winners.append({'player': player, 'score': score, 'tricksterScore': self.stats['tricksters'][player]})
         self.currentState = GAME_ENDED
         return True
 
-    def to_json(self):
+    def to_json_lite(self):
         """Basic record of the game."""
         print(self.sealedRounds)
         return {self.id: {'rounds': self.sealedRounds, 'players': self.players, 'scores': self.scores}}
 
     def has_ended(self):
         return self.currentState == GAME_ENDED
-
-
-
-
-
-
-
