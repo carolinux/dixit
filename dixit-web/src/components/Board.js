@@ -267,13 +267,10 @@ export default function Board(props) {
         }
 
         </Grid>
-        <Grid item sm={2}>
+        <Grid item sm={5}>
         </Grid>
-        <Grid item sm={2}>
-        </Grid>
-        <Grid item sm={2}>
-        </Grid>
-        <Grid item sm={2}>
+        <Grid item sm={3}>
+        {isCreator && gameState==="waiting_to_start" && <Typography>{process.env.REACT_APP_API_URL}/join/{gid} </Typography>}
         </Grid>
         <Grid item sm={2}>
         {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('abandon')} className={classes.control}>
