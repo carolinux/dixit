@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
 import random
 import json
+from typing import List
 from uuid import uuid4
 from copy import copy
 
@@ -25,7 +26,7 @@ class Game:
     currentRound: dict
     sealedRounds: list
     players: list
-    winners: list
+    winners: dict
     scores: dict
     narratorIdx: int
     cards: list
@@ -63,7 +64,7 @@ class Game:
         if winners is not None:
             self.winners = winners
         else:
-            self.winners = []
+            self.winners = {}
         if scores is not None:
             self.scores = scores
         else:
@@ -431,17 +432,38 @@ class Game:
 
         sorted_scores = sorted(self.scores.items(), key=lambda x: x[1])
 
+        self.winners['winners'] = []
         for _ in medals:
             if sorted_scores:
                 player, score = sorted_scores.pop()
-                self.winners.append({'player': player, 'score': score, 'tricksterScore': self.stats['tricksters'][player]})
+                self.winners['winners'].append({'player': player, 'score': score})
+        self.winners['tricksters'] = self.get_tricksters()
         self.currentState = GAME_ENDED
         return True
 
     def to_json_lite(self):
         """Basic record of the game."""
-        print(self.sealedRounds)
         return {self.id: {'rounds': self.sealedRounds, 'players': self.players, 'scores': self.scores}}
 
     def has_ended(self):
         return self.currentState == GAME_ENDED
+
+    def get_tricksters(self) -> dict:
+        """
+        Return None if nobody tricked anyone, otherwise
+        a dictionary
+        {"tricksters": ["player1", "player3"], "score": 42}
+        if player1 and player3 tied for the highest trickster score
+        """
+        max_score = 0
+        for player, score in self.stats['tricksters']:
+            max_score = max(max_score, score)
+        if max_score == 0:
+            return None
+        res = {'tricksters': [], 'score': max_score}
+        for player, score in self.stats['tricksters']:
+            if score == max_score:
+                res['tricksters'].append(player)
+        return res
+
+
