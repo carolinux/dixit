@@ -456,12 +456,12 @@ class Game:
         if player1 and player3 tied for the highest trickster score
         """
         max_score = 0
-        for player, score in self.stats['tricksters']:
+        for player, score in self.stats['tricksters'].items():
             max_score = max(max_score, score)
         if max_score == 0:
             return None
         res = {'tricksters': [], 'score': max_score}
-        for player, score in self.stats['tricksters']:
+        for player, score in self.stats['tricksters'].items():
             if score == max_score:
                 res['tricksters'].append(player)
         return res
