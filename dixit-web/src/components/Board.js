@@ -204,7 +204,7 @@ export default function Board(props) {
         }
      };
     connectSocket();
-    messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    //messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     return () => {
       if (currTimeout) {
        clearTimeout(currTimeout);
@@ -257,7 +257,7 @@ export default function Board(props) {
 
         <Grid item sm={2}>
 
-        {gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
+        {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
           {texts.stateTransitions.start}
         </Button>
         }
