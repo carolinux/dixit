@@ -210,7 +210,7 @@ export default function Board(props) {
        clearTimeout(currTimeout);
        }
     }
-  }, [updateTime]); // call useEffect every time the updateTime of the game changes
+  }, []); // call useEffect every time the updateTime of the game changes
 
 
 
