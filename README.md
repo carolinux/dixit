@@ -81,6 +81,8 @@ Have fun playing different players from different browsers.
 - Configure the domain name dixit.lucidcode.ch to point to the IP of the production server
 
 - Install the SSL certificate on the production server by following the instructions here: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal
+- To renew the SSL certificate, need to run `sudo certbot renew`
+- Note: Port 80 needs to also be open, so that the temporary certbot http server can go through with the installation and later renewal of the certificate
 
 ### Release
 From the server run `sudo bash startprod.sh`
