@@ -43,17 +43,17 @@ newgrp docker
 reboot
 ```
 
-### Install Python 3.6
+### Install Python 3.10
 
-`sudo apt-get install python3.6`
+`sudo apt-get install python3.10`
 
 If this fails in your distro, do:
 
 ```commandline
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt update
-sudo apt install python3.6
-sudo apt install python3.6-distutils
+sudo apt install python3.10
+sudo apt install python3.10-distutils
 ```
 ### Install pipenv
 
@@ -82,7 +82,7 @@ Have fun playing different players from different browsers.
 
 - Install the SSL certificate on the production server by following the instructions here: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal
 - To renew the SSL certificate, need to run `sudo certbot renew`
-- Note: Port 80 needs to also be open, so that the temporary certbot http server can go through with the installation and later renewal of the certificate
+- Note: Port 80 needs to also be open in the router settings, so that the temporary certbot http server can go through with the installation and later renewal of the certificate
 
 ### Release
 From the server run `sudo bash startprod.sh`
