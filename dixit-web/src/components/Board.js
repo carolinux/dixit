@@ -277,6 +277,10 @@ export default function Board(props) {
           {texts.stateTransitions.abandon}
         </Button>
         }
+        {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('rematch')} className={classes.control}>
+          {texts.stateTransitions.rematch}
+        </Button>
+        }
         </Grid>
 
       </Grid>

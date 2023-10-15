@@ -1,5 +1,6 @@
 import React, {useEffect, useState, Fragment} from 'react';
 import Highcharts from 'highcharts';
+import Button from '@material-ui/core/Button';
 import HighchartsReact from 'highcharts-react-official';
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/core/styles';
@@ -7,7 +8,7 @@ import { useHistory, useParams } from "react-router-dom";
 import Typography from '@material-ui/core/Typography';
 import axios from 'axios';
 import Sound from 'react-sound'
-
+import { getTexts } from './resources/Texts';
 
 const optionsTemplate = {
   chart: {
@@ -65,6 +66,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Winners() {
+  const texts = getTexts();
   const classes = useStyles();
   const {gid} = useParams();
   const [options, setOptions] = useState(undefined);
@@ -82,6 +84,11 @@ export default function Winners() {
     axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/' + gid)
      .then(resp => {
        //console.log(resp.data.game.winners);
+       if (resp.data.game.state !== 'game_ended' ) {
+          history.push('/board/'+gid);
+          return;
+
+       }
        let winners = resp.data.game.winners.winners
        let tricksters = resp.data.game.winners.tricksters
        //let winners = [{player: "First", score: 100}, {player: "Second", score: 80}]
@@ -128,6 +135,19 @@ export default function Winners() {
       return ' each';
   }
 
+    const restartGame = () => {
+  console.log("Call restart game");
+
+
+   axiosWithCookies.put(process.env.REACT_APP_API_URL+ '/games/' + gid + '/rematch' , {})
+     .then(resp => {
+        history.push('/board/'+gid);
+     })
+     .catch(function (error) {
+    console.log(error);
+  })
+  };
+
 
   return (<div><HighchartsReact highcharts={Highcharts} options={options} />
     {tricksters && <Grid container spacing={2}>
@@ -151,6 +171,14 @@ export default function Winners() {
       playStatus={soundStatus}
       volume={60}
     />
+
+    <Grid item sm={2}>
+
+{<Button size='medium' color='primary' onClick={() => restartGame()} className={classes.control}>
+  {texts.stateTransitions.rematch}
+</Button>
+}
+</Grid>
     </div>
 
   )

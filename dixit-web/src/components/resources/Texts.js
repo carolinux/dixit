@@ -48,7 +48,8 @@ export const getTexts = (props) => {
     stateTransitions: {
       start: 'Start the first round!',
       next: 'Start the next round!',
-      abandon: 'Abandon game...'
+      abandon: 'Abandon game...',
+      rematch: 'Rematch!'
 
     }
   }

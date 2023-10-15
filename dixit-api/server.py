@@ -29,11 +29,12 @@ logger = logging.getLogger(__name__)
 
 ## React Routes ##
 @atexit.register
-def shutdown():
+def save(gid=None):
     # save the game data :)
     recs = []
     for g in get_all_games(red):
-        recs.append(g.to_json_lite())
+        if gid is None or g.id == gid:
+            recs.append(g.to_json_lite())
     data = {'games': recs}
     fn = os.path.join("./game_data/export_{}.json".format(datetime.now().strftime("%Y%m%d_%H%M%S")))
     with open(fn, 'w') as f:
@@ -249,6 +250,24 @@ def abandon(gid, jwt_data=None):
         flask.abort(400, str(e))
     game_data = game.serialize_for_status_view(player)
     return jsonify({"game": game_data})
+
+
+@app.route('/games/<gid>/rematch', methods=['PUT'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def restart(gid, jwt_data=None):
+    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    try:
+        save(game.id)
+        game.start_rematch()
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': "Game restarted"}), room=gid)
+    except Exception as e:
+        print(e)
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
+
 
 
 

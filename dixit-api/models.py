@@ -16,7 +16,7 @@ MIN_PLAYERS = 2  # for testing..
 MAX_PLAYERS = 6
 INITIAL_CARD_ALLOCATION = 6
 SUBSEQUENT_CARD_ALLOCATION = 1
-WIN_SCORE = 36
+WIN_SCORE = 2
 MAX_CARD = 134
 
 
@@ -93,6 +93,10 @@ class Game:
             self.stats = stats
         else:
             self.stats = {}
+
+    def start_rematch(self) -> None:
+        """Reset game to allow rematch."""
+        self.__init__(id=self.id, players=self.players, creator=self.creator)
 
     def init_cards(self, deck_name=None):
         # TODO: allow to choose different deck name
