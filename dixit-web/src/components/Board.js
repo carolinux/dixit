@@ -116,6 +116,10 @@ export default function Board(props) {
         if (message) {
             let messages2 = messages;
             messages2.push(message);
+            // keep only last 6 messages
+            if (messages2.length > 6) {
+                messages2 = messages2.slice(messages2.length-6);
+            }
             setMessages(messages2);
         }
         setUpdateTime(Date.now());

@@ -25,7 +25,7 @@ const useStyles = makeStyles(() => ({
   margin: '1px 0',
   },
   message_box : {
-    height: '100px',
+    height: '250px',
     overflowY: 'scroll',
   }
 }));
