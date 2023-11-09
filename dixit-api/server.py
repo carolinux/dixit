@@ -89,8 +89,13 @@ def games_api():
         player_name = request.json['player']
         game_id = request.json["game"]
         if game_id == "new":
+            attempt = 0
             while True:
+                #if attempt == 0:
+                #    uid = "red-bear"
+                #else:
                 uid = generate_cute_id()
+                attempt+=1
                 game = Game(uid, creator=player_name)
                 added = add_game(red, game)
                 if added:
