@@ -98,6 +98,14 @@ export default function Join(props) {
     }
   }
 
+  const handleKeyPress = (event) => {
+  /* allow joining game by pressing enter in the dialog */
+  if (event.key == 'Enter') {
+    event.preventDefault();
+    addPlayer();
+    }
+  };
+
   return (
     <Grid container className={classes.root} spacing={2}>
       <Grid item xs={12}>
@@ -110,6 +118,7 @@ export default function Join(props) {
                 <Fragment>
                   <form noValidate autoComplete='off' className={classes.form}>
                     <TextField onChange={updateName}
+                      onKeyPress={handleKeyPress}
                       helperText={texts.login.question}
                       error={formError}
                       className={classes.formText}

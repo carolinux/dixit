@@ -95,6 +95,14 @@ export default function Create(props) {
     }
   }
 
+    const handleKeyPress = (event) => {
+  /* allow joining game by pressing enter in the dialog */
+  if (event.key == 'Enter') {
+    event.preventDefault();
+    addPlayer();
+    }
+  };
+
   const updateGame = (gid) => setGameId(gid);
 
   return (
@@ -109,6 +117,7 @@ export default function Create(props) {
                 <Fragment>
                   <form noValidate autoComplete='off' className={classes.form}>
                     <TextField onChange={updateName}
+                      onKeyPress={handleKeyPress}
                       helperText={texts.login.question}
                       error={formError}
                       className={classes.formText}
