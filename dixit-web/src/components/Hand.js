@@ -110,6 +110,8 @@ export default function Hand(props) {
   const texts = getTexts();
   const audio = new Audio(clickCardSound);
   const audioError = new Audio(clickCardErrorSound);
+  audio.volume = 0.2;
+  audioError.volume = 0.2;
 
   const question = isNarrator ? texts.cardSelectionDialog.question.mainPlayer
     : texts.cardSelectionDialog.question.otherPlayers;

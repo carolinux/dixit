@@ -169,7 +169,7 @@ export default function Winners() {
       <Sound
       url={soundUrl}
       playStatus={soundStatus}
-      volume={60}
+      volume={30}
     />
 
     <Grid item sm={2}>

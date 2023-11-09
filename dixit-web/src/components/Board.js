@@ -76,6 +76,9 @@ export default function Board(props) {
   const audioReveal = new Audio(revealSound);
   const audioPhrase = new Audio(phraseSound);
   const audioStart = new Audio(startSound);
+  audioReveal.volume = 0.2;
+  audioPhrase.volume = 0.1;
+  audioStart.volume = 0.2;
 
   const [players, setPlayers] = useState([]);
   const [updateTime, setUpdateTime] = useState(null);

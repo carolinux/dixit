@@ -54,7 +54,9 @@ export default function CardsPlayed(props) {
   const [cardToSelect, setCardToSelect] = useState(undefined);
   const classes = useStyles();
   const audio = new Audio(clickCardSound);
+  audio.volume = 0.2;
   const audioError = new Audio(clickCardErrorSound);
+  audioError.volume = 0.2;
 
   const openDialog = () => {
     setOpen(true);
