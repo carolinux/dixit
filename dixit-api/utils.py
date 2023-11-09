@@ -22,6 +22,20 @@ def authenticate_with_cookie_token(f):
         return f(*args, **kwargs, jwt_data=data)
     return decorated_function
 
+def authenticate_with_cookie_token_permissive(f):
+    """Validates that token is correct for game & player, otherwise passes None to jwt_data"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        req = flask.request
+        cookies = req.cookies.to_dict()
+        token = cookies.get('token')
+        try:
+            data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
+        except Exception as e:  # signature has expired or payload not correctly signed
+            data = None
+        return f(*args, **kwargs, jwt_data=data)
+    return decorated_function
+
 
 def create_token(player_names, gids, expiration_date):
     """The token contains two parallel lists of player_names, game_ids for the nickname the player has chosen for each game they have participated."""

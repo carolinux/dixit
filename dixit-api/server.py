@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, request, jsonify, make_response, render_template
+from flask import Flask, request, jsonify, make_response, render_template, redirect, url_for
 from flask_socketio import SocketIO, emit, join_room
 from flask_cors import CORS, cross_origin
 import redis
@@ -43,7 +43,7 @@ def save(gid=None):
 
 @app.route("/")
 def home():
-    print("one call at {}".format(datetime.now()))
+
     return render_template("index.html")
 
 
@@ -58,7 +58,20 @@ def join(gid):
 
 
 @app.route("/board/<gid>")
-def board(gid):
+@cross_origin()
+@utils.authenticate_with_cookie_token_permissive
+def board(gid, jwt_data=None):
+    if jwt_data is None:
+        game = get_game_by_id(red, gid)
+        if game and not game.is_started():
+            return redirect(url_for('join', gid=gid))
+    else:
+        joined_games = jwt_data['gids'].split(',')
+        if gid not in joined_games:
+            game = get_game_by_id(red, gid)
+            if game and not game.is_started():
+                return redirect(url_for('join', gid=gid))
+    # otherwise: redirect to the board, it will handle any other error cases in React
     return render_template("index.html")
 
 
