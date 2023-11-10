@@ -48,8 +48,22 @@ def get_games_from_cookie(request):
     token = cookies.get('token')
     if token is None:
         return []
-    data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
+    try:
+        data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
+    except Exception as e:
+        data = {}
     return data.get('gids', [])
+
+def has_valid_cookie(request) -> bool:
+    cookies = request.cookies.to_dict()
+    token = cookies.get('token')
+    if token is None:
+        return False
+    try:
+        jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
+    except Exception as e:
+        return False
+    return True
 
 
 def generate_response_with_jwt_token(request, response, player_name, gid):
@@ -58,18 +72,21 @@ def generate_response_with_jwt_token(request, response, player_name, gid):
     Note: the players and gids are added just for readability and debuggability. Only the token is checked for authentication.
     """
     cookies = request.cookies.to_dict()
-    expiration_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=120)
+    expiration_date = datetime.datetime.utcnow() + datetime.timedelta(minutes=180)
     if not cookies.get('token'):
         response.set_cookie("players", player_name, httponly=True, samesite='Strict', expires=expiration_date)
         response.set_cookie("gids", gid, httponly=True, samesite='Strict', expires=expiration_date)
         response.set_cookie("token", create_token(player_name, gid, expiration_date=expiration_date), httponly=True, samesite='Strict', expires=expiration_date)
     else:
         token = cookies.get('token')
-        data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
-        existing_names = data.get('players')
-        existing_games = data.get('gids')
-        new_names = existing_names + ',' + player_name
-        new_games = existing_games + ',' + gid
+        try:
+            data = jwt.decode(token, conf.SECRET_KEY, algorithms=["HS256"])
+        except Exception as e:
+            data = {}
+        existing_names = data.get('players', '')
+        existing_games = data.get('gids', '')
+        new_names = existing_names + ',' + player_name if existing_names else player_name
+        new_games = existing_games + ',' + gid if existing_games else gid
         response.set_cookie("players", new_names, httponly=True, samesite='Strict', expires=expiration_date)
         response.set_cookie("gids", new_games, httponly=True, samesite='Strict', expires=expiration_date)
         response.set_cookie("token", create_token(new_names, new_games, expiration_date=expiration_date), httponly=True, samesite='Strict', expires=expiration_date)

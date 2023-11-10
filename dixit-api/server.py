@@ -91,10 +91,10 @@ def games_api():
         if game_id == "new":
             attempt = 0
             while True:
-                #if attempt == 0:
-                #    uid = "red-bear"
-                #else:
-                uid = generate_cute_id()
+                if attempt == 0:
+                    uid = "yellow-bird"
+                else:
+                    uid = generate_cute_id()
                 attempt+=1
                 game = Game(uid, creator=player_name)
                 added = add_game(red, game)
@@ -118,6 +118,8 @@ def games_api():
             print(e)
             flask.abort(400, str(e))
         resp = make_response(jsonify({"game": game.id}))
+        # this will fix the cookie if its from a previous incarnation of the server
+        # this is the only place where the cookie is set
         resp = utils.generate_response_with_jwt_token(request, resp, player_name, game.id)
         return resp
 
