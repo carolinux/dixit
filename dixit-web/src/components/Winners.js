@@ -107,6 +107,11 @@ export default function Winners() {
         let first = winners[0];
         winners[0] = winners[1];
         winners[1] = first;
+        // re-arrange to be silver-gold-silver in case of tie (Note: tie for first place not allowed)
+        // this still doesnt take into account more than 2 people for silver or more than one for bronze
+        if (winners[0].score == winners[2].score) {
+            newOptions.colors[2] = newOptions.colors[0];
+        }
 
        winners.map((obj)=> {newOptions.series.push({type:'column', name: obj.player, data:[obj.score]})});
        setOptions(newOptions);

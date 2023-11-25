@@ -426,9 +426,23 @@ class Game:
         if self.currentState != ROUND_REVEALED:
             raise Exception("Cannot end")
         end = False
+        high_score = 0
         for player, score in self.scores.items():
             if score >= WIN_SCORE:
+                high_score = max(socre, high_score)
                 end = True
+
+        if not end:
+            return False
+
+        tie_count = 0
+        for player, score in self.scores.items():
+            if score == high_score:
+                tie_count +=1
+
+        if tie_count > 1:
+            end = False  # won't end the game when two people have the same highest score, will play more rounds until we have one clear winner
+
         if not end:
             return False
 
@@ -442,6 +456,8 @@ class Game:
                 player, score = sorted_scores.pop()
                 self.winners['winners'].append({'player': player, 'score': score})
         self.winners['tricksters'] = self.get_tricksters()
+        # self.winners['tricksters'] = {"tricksters": ["player1", "player3"], "score": 42}
+        # self.winners['winners'] = [{'player':'first', 'score':42},{'player':'2dna1', 'score':40}, {'player':'send2', 'score':40}]
         self.currentState = GAME_ENDED
         return True
 
