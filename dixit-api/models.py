@@ -429,7 +429,7 @@ class Game:
         high_score = 0
         for player, score in self.scores.items():
             if score >= WIN_SCORE:
-                high_score = max(socre, high_score)
+                high_score = max(score, high_score)
                 end = True
 
         if not end:
