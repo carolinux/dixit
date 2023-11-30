@@ -49,7 +49,8 @@ export const getTexts = (props) => {
       start: 'Start the first round!',
       next: 'Start the next round!',
       abandon: 'Abandon game...',
-      rematch: 'Rematch!'
+      rematch: 'Rematch!',
+      remove: 'Remove player ',
 
     }
   }

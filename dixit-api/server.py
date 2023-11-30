@@ -143,13 +143,13 @@ def creds(response):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_status_api(gid, jwt_data=None):
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data)
     game_data = game.serialize_for_status_view(player)
     # get the public state
     return jsonify({"game": game_data})
 
 
-def get_authenticated_game_and_player_or_error(gid, jwt_data, lock=False):
+def get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=False):
     joined_games = jwt_data['gids'].split(',')
     players = jwt_data['players'].split(',')
     game_to_player = {}
@@ -175,6 +175,8 @@ def get_authenticated_game_and_player_or_error(gid, jwt_data, lock=False):
     player = game_to_player[gid]
     if not game.contains_player(player):
         error = "Player {} is not in game {}".format(player, gid)
+        # TODO: can remove the game from the player's cookie then...
+        print(error)
         release_lock(red, gid)
         flask.abort(403, error)
     return game, player
@@ -184,7 +186,7 @@ def get_authenticated_game_and_player_or_error(gid, jwt_data, lock=False):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_start(gid, jwt_data=None):
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         game.start()
         update_game(red, game)
@@ -200,7 +202,7 @@ def games_start(gid, jwt_data=None):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_set_card(gid, jwt_data=None):
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         card = request.json['card']
         phrase = request.json.get('phrase')
@@ -225,7 +227,7 @@ def games_set_card(gid, jwt_data=None):
 @utils.authenticate_with_cookie_token
 def games_vote_card(gid, jwt_data=None):
     import traceback
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         card = request.json['vote']  # this is the 'string' of the card
         game.cast_vote(player, card)
@@ -243,7 +245,7 @@ def games_vote_card(gid, jwt_data=None):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def games_next_round(gid, jwt_data=None):
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         game.start_next_round()
         update_game(red, game)
@@ -260,7 +262,7 @@ def games_next_round(gid, jwt_data=None):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def abandon(gid, jwt_data=None):
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         game.abandon(player)
         update_game(red, game)
@@ -276,7 +278,7 @@ def abandon(gid, jwt_data=None):
 @cross_origin()
 @utils.authenticate_with_cookie_token
 def restart(gid, jwt_data=None):
-    game, player = get_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
     try:
         save(game.id)
         game.start_rematch()
@@ -284,6 +286,23 @@ def restart(gid, jwt_data=None):
         socketio.emit('update', json.dumps({'data': "Game restarted"}), room=gid)
     except Exception as e:
         print(e)
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
+
+
+@app.route('/games/<gid>/remove/<player_to_remove>', methods=['PUT'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def remove_player(gid, player_to_remove, jwt_data=None):
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    try:
+        game.remove_player(player, player_to_remove)
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"Player {player_to_remove} left"}), room=gid)
+    except Exception as e:
+        import traceback
+        print(traceback.print_exc())
         flask.abort(400, str(e))
     game_data = game.serialize_for_status_view(player)
     return jsonify({"game": game_data})

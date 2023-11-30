@@ -288,6 +288,19 @@ export default function Board(props) {
           {texts.stateTransitions.rematch}
         </Button>
         }
+
+        {isCreator && players.map((player) =>
+            <Button size='medium' color='primary' onClick={() => transitionGame('remove/'+player.name)} className={classes.control}>
+          {texts.stateTransitions.remove} {player.name}
+          </Button>
+        )
+       }
+
+       {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
+          {texts.stateTransitions.start}
+        </Button>
+        }
+
         </Grid>
 
       </Grid>

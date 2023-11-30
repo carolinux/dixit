@@ -15,7 +15,6 @@ GAME_ABANDONED = "game_abandoned"
 MIN_PLAYERS = 2  # for testing - in reality two players breaks the winner podium if it goes to the game end state
 MAX_PLAYERS = 12
 INITIAL_CARD_ALLOCATION = 6
-SUBSEQUENT_CARD_ALLOCATION = 1
 WIN_SCORE = 36
 MAX_CARD = 134
 
@@ -109,21 +108,21 @@ class Game:
     def is_started(self):
         return self.currentState != WAITING_TO_START
 
-    def allocate_cards(self, card_allocation=SUBSEQUENT_CARD_ALLOCATION):
+    def allocate_cards(self):
         self.currentRound['allocations'] = {}
         if len(self.sealedRounds) > 0:
             prevRound = self.sealedRounds[-1]
             self.currentRound['allocations'] = copy(prevRound['allocations'])
         allocations = self.currentRound['allocations']
-        for _ in range(card_allocation):
-            for player in self.players:
-                if len(self.cards) == 0:
-                    self.cards = self.discards
-                    self.discards = []
-                    random.shuffle(self.cards)
+        for player in self.players:
+            if player not in allocations:
+                allocations[player] = []
+            if len(self.cards) == 0:
+                self.cards = self.discards
+                self.discards = []
+                random.shuffle(self.cards)
+            while len(allocations[player]) < INITIAL_CARD_ALLOCATION:
                 card = self.cards.pop()
-                if player not in allocations:
-                    allocations[player] = []
                 allocations[player].append(card)
 
     def serialize_for_list_view(self, joinable_for_player=None):
@@ -299,6 +298,48 @@ class Game:
             raise Exception("Game {} is full".format(self.id))
         self.players.append(player_name)
 
+    def remove_player(self, remover: str, player: str) -> None:
+
+        if not self.is_creator(remover):
+            raise Exception("Only creator can remove players from game.")
+
+        if self.is_creator(player):
+            raise Exception("Cannot remove creator from game. Abandon game instead.")
+
+        if self.is_abandoned():
+            raise Exception("Cannot remove player from abandoned game.")
+
+        if self.currentState == GAME_ENDED:
+            raise Exception("Cannot remove player from ended game.")
+
+        if player not in self.players:
+            raise Exception("Player {} not in game {}.".format(player, self.id))
+
+        if not self.is_started():
+            self.players.remove(player)
+            return
+        idx = self.players.index(player)
+        narrator_idx = self.narratorIdx
+        self.players.remove(player)
+
+        print(f"idx: {idx}, narrator_idx: {narrator_idx}, num: {self.num()}")
+
+        if self.currentState == ROUND_REVEALED:
+            # start next
+            if narrator_idx < idx:
+                self.advance_narrator()
+            if narrator_idx == idx and idx == self.num():
+                self.advance_narrator()
+            self.start_next_round(do_state_check=True, do_end_check=True, advance_narrator=False)
+        else:
+            # restart current
+            if narrator_idx > idx:
+                self.narratorIdx -= 1
+            if narrator_idx == idx and idx == self.num():
+                self.advance_narrator()
+            print(f"idx: {idx}, narrator_idx: {self.narratorIdx}, num: {self.num()}")
+            self.start_next_round(do_state_check=False, do_end_check=False, advance_narrator=False)
+
     def start(self):
         if self.is_started():
             raise Exception("Could not start game already in progress")
@@ -313,7 +354,10 @@ class Game:
             self.currentRound['decoys'] = {}
             self.currentRound['votes'] = {}
             self.currentRound['scores'] = {}
-            self.allocate_cards(INITIAL_CARD_ALLOCATION)
+            self.currentRound['narratorCard'] = None
+            self.currentRound['phrase'] = None
+            self.currentRound['allocations'] = {}
+            self.allocate_cards()
             self.currentState = WAITING_FOR_NARRATOR
 
     def set_narrator_card(self, player, card, phrase):
@@ -326,6 +370,7 @@ class Game:
         self.currentRound['phrase'] = phrase
         self.currentRound['narratorCard'] = card
         self.currentRound['allocations'][player].remove(card)
+        self.currentRound['allCards'] = [self.currentRound['narratorCard']]
         self.currentState = WAITING_FOR_PLAYERS
 
     def set_decoy_card(self, player, card):
@@ -338,8 +383,8 @@ class Game:
 
         self.currentRound['decoys'][player] = card
         self.currentRound['allocations'][player].remove(card)
+        self.currentRound['allCards'] = [self.currentRound['narratorCard']] + list(self.currentRound['decoys'].values())
         if len(self.currentRound['decoys']) == len(self.players) - 1:
-            self.currentRound['allCards'] = [self.currentRound['narratorCard']] + list(self.currentRound['decoys'].values())
             random.shuffle(self.currentRound['allCards']);
             self.currentState = WAITING_FOR_VOTES
 
@@ -398,26 +443,32 @@ class Game:
         if len(self.sealedRounds) == 0:
             self.narratorIdx = 0
             return
+
         self.narratorIdx += 1
-        if self.narratorIdx == self.num():
+        if self.narratorIdx >= self.num():
             self.narratorIdx = 0
 
-    def start_next_round(self):
-        if self.currentState != ROUND_REVEALED:
+    def start_next_round(self, do_state_check=True, do_end_check=True, advance_narrator=True):
+        if do_state_check and self.currentState != ROUND_REVEALED:
             raise Exception("Illegal state {}. Cannot transition to next round.".format(self.currentState))
+
         self.sealedRounds.append(self.currentRound)
 
-        did_end = self.end()
-        if did_end:
-            return
+        if do_end_check:
+            did_end = self.end()
+            if did_end:
+                return
 
-        self.advance_narrator()
+        if advance_narrator:
+            self.advance_narrator()
+
         self.currentRound = {}
         self.currentRound['decoys'] = {}
         self.currentRound['votes'] = {}
         self.currentRound['scores'] = {}
+
         self.update_discard_pile(self.sealedRounds[-1])
-        self.allocate_cards(SUBSEQUENT_CARD_ALLOCATION)
+        self.allocate_cards()
         self.currentState = WAITING_FOR_NARRATOR
     def update_discard_pile(self, round):
         self.discards.extend(round['allCards'])
