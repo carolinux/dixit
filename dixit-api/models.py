@@ -326,6 +326,10 @@ class Game:
         idx = self.players.index(player)
         narrator_idx = self.narratorIdx
         self.players.remove(player)
+        if player in self.scores:
+            del self.scores[player]
+        if player in self.stats['tricksters']:
+            del self.stats['tricksters'][player]
 
         print(f"idx: {idx}, narrator_idx: {narrator_idx}, num: {self.num()}")
 
@@ -391,7 +395,7 @@ class Game:
         self.currentRound['allocations'][player].remove(card)
         self.currentRound['allCards'] = [self.currentRound['narratorCard']] + list(self.currentRound['decoys'].values())
         if len(self.currentRound['decoys']) == len(self.players) - 1:
-            random.shuffle(self.currentRound['allCards']);
+            random.shuffle(self.currentRound['allCards'])
             self.currentState = WAITING_FOR_VOTES
 
     def set_scores(self):
