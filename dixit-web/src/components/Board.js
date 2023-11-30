@@ -280,12 +280,12 @@ export default function Board(props) {
         {isCreator && gameState==="waiting_to_start" && <Typography>{process.env.REACT_APP_API_URL}/join/{gid} </Typography>}
         </Grid>
         <Grid item sm={2}>
-        {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('abandon')} className={classes.control}>
-          {texts.stateTransitions.abandon}
-        </Button>
-        }
         {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('rematch')} className={classes.control}>
           {texts.stateTransitions.rematch}
+        </Button>
+        }
+        {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('abandon')} className={classes.control}>
+          {texts.stateTransitions.abandon}
         </Button>
         }
 
@@ -295,11 +295,6 @@ export default function Board(props) {
           </Button>
         )
        }
-
-       {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
-          {texts.stateTransitions.start}
-        </Button>
-        }
 
         </Grid>
 

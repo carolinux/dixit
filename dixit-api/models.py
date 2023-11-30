@@ -117,11 +117,12 @@ class Game:
         for player in self.players:
             if player not in allocations:
                 allocations[player] = []
-            if len(self.cards) == 0:
-                self.cards = self.discards
-                self.discards = []
-                random.shuffle(self.cards)
+
             while len(allocations[player]) < INITIAL_CARD_ALLOCATION:
+                if len(self.cards) == 0:
+                    self.cards = self.discards
+                    self.discards = []
+                    random.shuffle(self.cards)
                 card = self.cards.pop()
                 allocations[player].append(card)
 
@@ -318,6 +319,10 @@ class Game:
         if not self.is_started():
             self.players.remove(player)
             return
+
+        if len(self.players) == MIN_PLAYERS:
+            raise Exception("Cannot remove player from game with only {} players.".format(MIN_PLAYERS))
+
         idx = self.players.index(player)
         narrator_idx = self.narratorIdx
         self.players.remove(player)
@@ -356,7 +361,7 @@ class Game:
             self.currentRound['scores'] = {}
             self.currentRound['narratorCard'] = None
             self.currentRound['phrase'] = None
-            self.currentRound['allocations'] = {}
+            self.currentRound['allCards'] = []
             self.allocate_cards()
             self.currentState = WAITING_FOR_NARRATOR
 
@@ -463,6 +468,7 @@ class Game:
             self.advance_narrator()
 
         self.currentRound = {}
+        self.currentRound['allCards'] = []
         self.currentRound['decoys'] = {}
         self.currentRound['votes'] = {}
         self.currentRound['scores'] = {}
