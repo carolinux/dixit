@@ -335,6 +335,7 @@ class Game:
                 self.advance_narrator()
             if narrator_idx == idx and idx == self.num():
                 self.advance_narrator()
+            print(f"idx: {idx}, new narrator_idx: {self.narratorIdx}, num: {self.num()}")
             self.start_next_round(do_state_check=True, do_end_check=True, advance_narrator=False)
         else:
             # restart current
@@ -342,7 +343,7 @@ class Game:
                 self.narratorIdx -= 1
             if narrator_idx == idx and idx == self.num():
                 self.advance_narrator()
-            print(f"idx: {idx}, narrator_idx: {self.narratorIdx}, num: {self.num()}")
+            print(f"idx: {idx}, new narrator_idx: {self.narratorIdx}, num: {self.num()}")
             self.start_next_round(do_state_check=False, do_end_check=False, advance_narrator=False)
 
     def start(self):
@@ -352,7 +353,7 @@ class Game:
             raise Exception("Need to have between {} and {} players".format(MIN_PLAYERS, MAX_PLAYERS))
         else:
             self.create_playing_order()
-            self.advance_narrator()
+            self.advance_narrator(first=True)
             self.scores = {p: 0 for p in self.players}
             self.stats['tricksters'] = {p: 0 for p in self.players}
             self.currentRound = {}
@@ -444,8 +445,8 @@ class Game:
             self.set_scores()
             self.currentState = ROUND_REVEALED
 
-    def advance_narrator(self):
-        if len(self.sealedRounds) == 0:
+    def advance_narrator(self, first=False):
+        if first:
             self.narratorIdx = 0
             return
 
