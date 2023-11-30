@@ -19,7 +19,7 @@ const useStyles = makeStyles(() => ({
   root: {
     display: 'flex',
     flexWrap: 'wrap',
-    minWidth: 1500,
+    minWidth: '100%',
     minHeight: 224,
     width: '50%',
     justifyContent: 'left'
@@ -100,7 +100,7 @@ export default function CardsPlayed(props) {
 
   return (
   <Fragment>
-      <div className={classes.root}>
+      <div className={classes.root}  >
         {showDialog && cards.map((card, i) =>
           <Button key={card+'_'+i} onClick={() => play(card)}>
             <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} />
