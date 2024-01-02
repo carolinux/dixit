@@ -175,6 +175,8 @@ def get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=False)
     player = game_to_player[gid]
     if not game.contains_player(player):
         error = "Player {} is not in game {}".format(player, gid)
+        # this happens when the player was removed from the game
+        # right now the cookie still keeps the game in the list of joined games
         # TODO: can remove the game from the player's cookie then...
         print(error)
         release_lock(red, gid)

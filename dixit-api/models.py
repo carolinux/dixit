@@ -16,7 +16,7 @@ MIN_PLAYERS = 2  # for testing - in reality two players breaks the winner podium
 MAX_PLAYERS = 12
 INITIAL_CARD_ALLOCATION = 6
 WIN_SCORE = 36
-MAX_CARD = 134
+MAX_CARD = 135
 
 
 @dataclass
