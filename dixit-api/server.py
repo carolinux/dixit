@@ -148,13 +148,13 @@ def join(gid):
 def board(gid, jwt_data=None):
     if jwt_data is None:
         game = get_game_by_id(red, gid)
-        if game and not game.is_started():
+        if game: # and not game.is_started():
             return redirect(url_for('join', gid=gid))
     else:
         joined_games = jwt_data['gids'].split(',')
         if gid not in joined_games:
             game = get_game_by_id(red, gid)
-            if game and not game.is_started():
+            if game: # and not game.is_started():
                 return redirect(url_for('join', gid=gid))
     # otherwise: redirect to the board, it will handle any other error cases in React
     return render_template("index.html")

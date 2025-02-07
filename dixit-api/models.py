@@ -291,7 +291,8 @@ class Game:
         if self.is_abandoned():
             raise Exception("Cannot join game that is abandoned.")
         if self.is_started():
-            if self.currentState != WAITING_FOR_NARRATOR:
+            print(f"{player_name} is trying to join game {self.id} that is in state {self.currentState}")
+            if self.currentState not in (WAITING_FOR_NARRATOR, ROUND_REVEALED):
                 raise Exception("Cannot join game that is already started, unless at the beginning of a round.")
             self.players.append(player_name)
             self.scores[player_name] = 0
