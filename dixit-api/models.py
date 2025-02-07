@@ -108,7 +108,7 @@ class Game:
     def is_started(self):
         return self.currentState != WAITING_TO_START
 
-    def allocate_cards(self):
+    def allocate_cards(self, single_player=None):
         self.currentRound['allocations'] = {}
         if len(self.sealedRounds) > 0:
             prevRound = self.sealedRounds[-1]
@@ -117,6 +117,8 @@ class Game:
         for player in self.players:
             if player not in allocations:
                 allocations[player] = []
+            if single_player is not None and player != single_player:
+                continue
 
             while len(allocations[player]) < INITIAL_CARD_ALLOCATION:
                 if len(self.cards) == 0:
@@ -289,7 +291,15 @@ class Game:
         if self.is_abandoned():
             raise Exception("Cannot join game that is abandoned.")
         if self.is_started():
-            raise Exception("Cannot join game that is already started.")
+            if self.currentState != WAITING_FOR_NARRATOR:
+                raise Exception("Cannot join game that is already started, unless at the beginning of a round.")
+            self.players.append(player_name)
+            self.scores[player_name] = 0
+            self.stats['tricksters'][player_name] = 0
+            self.allocate_cards(player_name)
+            return
+
+
         if player_name in self.players:
             raise Exception("Player with name {} already in game {}.".format(player_name, self.id))
         if not player_name:
