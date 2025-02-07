@@ -26,6 +26,48 @@ socketio = SocketIO(app)
 red = redis.StrictRedis('localhost', 6379, charset="utf-8", decode_responses=True)
 logger = logging.getLogger(__name__)
 
+html1 = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .question {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-sizing: border-box;
+    }
+    input[type="submit"] {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    input[type="submit"]:hover {
+        background-color: #45a049;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h2>"""
+
 
 ## React Routes ##
 @atexit.register
@@ -40,11 +82,54 @@ def save(gid=None):
     with open(fn, 'w') as f:
         json.dump(data, f)
 
-
 @app.route("/")
 def home():
 
     return render_template("index.html")
+
+
+@app.route("/q1", methods=['POST', 'GET'])
+def q1():
+    if request.method == 'POST':
+        ans = request.form['ans'].lower()
+        print(f"Ans: {ans} for q1")
+        if 'cacother' in ans or 'kakother' in ans:
+            return f'{html1}<b>{ans}</b> is correct! The first digit of the lock combination is 2. <a href="/q2">Next Question</a>'
+        else:
+            return f'{html1}<b>{ans}</b> is incorrect! Please try again .<a href="/q1">Go back</a>'
+
+    else:
+        return render_template("q1.html")
+
+
+@app.route("/q2", methods=['POST', 'GET'])
+def q2():
+    if request.method == 'POST':
+        ans = request.form['ans'].lower()
+        print(f"Ans: {ans} for q2")
+        if ans in ('matryoshkat', 'matryoshcat', 'meowtryoshka', 'meowtryoshkat', 'meowtryoshcat', 'matryoskat', 'matryoscat', 'meowtryoskat', 'meowtryoscat'):
+            return f'{html1}<b>{ans}</b> is correct! The second digit of the lock combination is 3. <a href="/q3">Next Question</a>'
+        else:
+            return f'{html1}<b>{ans}</b> is incorrect! Please try again .<a href="/q2">Go back</a>'
+
+    else:
+        return render_template("q2.html")
+
+
+@app.route("/q3", methods=['POST', 'GET'])
+def q3():
+    if request.method == 'POST':
+        ans = request.form['ans'].lower()
+        print(f"Ans: {ans} for q3f")
+        if ans in ('kerneloni', 'kernelloni', 'cernelloni', 'cerneloni', 'kernnelloni'):
+            return f'{html1}<b>{ans}</b> is correct! The last digit of the lock combination is 7.'
+        else:
+            return f'{html1}<b>{ans}</b> is incorrect! Please try again .<a href="/q3">Go back</a>'
+
+    else:
+        return render_template("q3.html")
+
+
 
 
 @app.route("/create")
