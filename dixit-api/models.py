@@ -109,10 +109,11 @@ class Game:
         return self.currentState != WAITING_TO_START
 
     def allocate_cards(self, single_player=None):
-        self.currentRound['allocations'] = {}
-        if len(self.sealedRounds) > 0:
-            prevRound = self.sealedRounds[-1]
-            self.currentRound['allocations'] = copy(prevRound['allocations'])
+        if single_player is None:
+            self.currentRound['allocations'] = {}
+            if len(self.sealedRounds) > 0:
+                prevRound = self.sealedRounds[-1]
+                self.currentRound['allocations'] = copy(prevRound['allocations'])
         allocations = self.currentRound['allocations']
         for player in self.players:
             if player not in allocations:
