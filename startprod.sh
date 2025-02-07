@@ -5,6 +5,7 @@ cd dixit-web
 npm run build
 cd ..
 cp -r dixit-web/build/ dixit-api/react_build
+cp dixit-api/templates/q* dixit-api/react_build
 chown -R carolinux dixit-api/react_build
 docker stop gamescache && docker rm gamescache || true
 docker run --name gamescache -p 6379:6379 -d redis redis-server
