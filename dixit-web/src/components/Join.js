@@ -76,8 +76,9 @@ export default function Join(props) {
             history.push('/board/'+res.data['game']);
           })
           .catch(error => {
-
+            console.log("could not join game")
             joiningInProgress = false;
+            alert("Could not join game. Round may be in progress.    Please try again later.")
           })
       };
       postData();
