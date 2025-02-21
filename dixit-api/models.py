@@ -4,6 +4,7 @@ import json
 from typing import List
 from uuid import uuid4
 from copy import copy
+import dacite
 
 WAITING_TO_START = "waiting_to_start"
 WAITING_FOR_NARRATOR = "waiting_for_narrator"
@@ -17,6 +18,29 @@ MAX_PLAYERS = 12
 INITIAL_CARD_ALLOCATION = 6
 WIN_SCORE = 36
 MAX_CARD = 135
+INITIAL_LOLPOINTS = 3
+
+
+@dataclass
+class LolPoints:
+    playerToRem: dict
+
+    def add_player(self, player):
+        self.playerToRem[player] = INITIAL_LOLPOINTS
+
+    def remove_player(self, player):
+        del self.playerToRem[player]
+
+    def cast_vote(self, voter, votee) -> bool:
+        if self.playerToRem[voter] <= 0:
+            print("Player doesn't have any lolpoints left to give")
+            return False
+        if voter == votee:
+            print("Cannot vote for self")
+            return False
+
+        self.playerToRem[player]-=1
+        return True
 
 
 @dataclass
@@ -33,6 +57,7 @@ class Game:
     currentState: str
     creator: str
     stats: dict
+    lolPoints: LolPoints
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -43,7 +68,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None):
         if id is not None:
             self.id = id
         else:
@@ -92,6 +117,12 @@ class Game:
             self.stats = stats
         else:
             self.stats = {}
+        if lolPoints is not None:
+            self.lolPoints = dacite.from_dict(LolPoints, lolPoints)
+        else:
+            self.lolPoints = LolPoints({})
+            for player in self.players:
+                self.lolPoints.add_player(player)
 
     def start_rematch(self) -> None:
         """Reset game to allow rematch."""
@@ -188,6 +219,7 @@ class Game:
         data['roundInfo'] = self.get_round_info(player)
         data['isNarrator'] = self.is_narrator(player)
         data['isCreator'] = self.is_creator(player)
+        data['lolPoints'] = self.lolPoints.playerToRem.get(player, 0)
         return data
 
     def is_creator(self, player):
@@ -213,7 +245,8 @@ class Game:
                 player = self.get_player_that_played_card(card)
                 narrator = False
             votes = self.get_players_that_voted_for_card(card)
-            result[card] = {'player': player, 'isNarrator': narrator, 'votes': votes}
+            lols = self.get_players_that_lolled_for_card(card)
+            result[card] = {'player': player, 'isNarrator': narrator, 'votes': votes, 'lols': lols}
         return result
 
     def get_player_that_played_card(self, card):
@@ -224,6 +257,13 @@ class Game:
     def get_players_that_voted_for_card(self, card):
         res = []
         for player, voted_card in self.currentRound['votes'].items():
+            if voted_card == card:
+                res.append(player)
+        return res
+
+    def get_players_that_lolled_for_card(self, card):
+        res = []
+        for player, voted_card in self.currentRound['lols'].items():
             if voted_card == card:
                 res.append(player)
         return res
@@ -296,6 +336,7 @@ class Game:
             if self.currentState not in (WAITING_FOR_NARRATOR, ROUND_REVEALED):
                 raise Exception("Cannot join game that is already started, unless at the beginning of a round.")
             self.players.append(player_name)
+            self.lolPoints.add_player(player_name)
             self.scores[player_name] = 0
             self.stats['tricksters'][player_name] = 0
             self.allocate_cards(player_name)
@@ -343,6 +384,8 @@ class Game:
         if player in self.stats['tricksters']:
             del self.stats['tricksters'][player]
 
+        self.lolPoints.remove_player(player)
+
         print(f"idx: {idx}, narrator_idx: {narrator_idx}, num: {self.num()}")
 
         if self.currentState == ROUND_REVEALED:
@@ -372,6 +415,8 @@ class Game:
             self.advance_narrator(first=True)
             self.scores = {p: 0 for p in self.players}
             self.stats['tricksters'] = {p: 0 for p in self.players}
+            for p in self.players:
+                self.lolPoints.add_player(p)
             self.currentRound = {}
             self.currentRound['decoys'] = {}
             self.currentRound['votes'] = {}
@@ -446,6 +491,11 @@ class Game:
 
         for p in self.players:
             self.scores[p] += scores.get(p, 0)
+
+        for voter, card in self.currentRound['lols']:
+            votee = card_to_player[card]
+            if self.lolPoints.cast_vote(voter, votee):
+                self.scores[votee]+=1
         self.currentRound['scores'] = scores
 
     def cast_vote(self, player, card):
@@ -460,6 +510,14 @@ class Game:
         if len(self.currentRound['votes']) == len(self.players) - 1:
             self.set_scores()
             self.currentState = ROUND_REVEALED
+
+
+    def cast_lol(self, player, card):
+        if self.currentState != WAITING_FOR_VOTES:
+            raise Exception("Trying to lol at an invalid point in the game")
+        if (not self.is_narrator() and card == self.currentRound['decoys'][player]) or (self.is_narrator() and self.currentRound.get("narratorCard") == card):
+            raise Exception("Trying to lol for own card, which is not allowed")
+        self.currentRound['lols'][player] = card
 
     def advance_narrator(self, first=False):
         if first:
@@ -488,6 +546,7 @@ class Game:
         self.currentRound['allCards'] = []
         self.currentRound['decoys'] = {}
         self.currentRound['votes'] = {}
+        self.currentRound['lols'] = {}
         self.currentRound['scores'] = {}
 
         self.update_discard_pile(self.sealedRounds[-1])

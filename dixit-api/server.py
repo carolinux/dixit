@@ -328,6 +328,26 @@ def games_vote_card(gid, jwt_data=None):
     return jsonify({"game": game_data})
 
 
+@app.route('/games/<gid>/lol', methods=['PUT'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def games_lol_card(gid, jwt_data=None):
+    import traceback
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    try:
+        card = request.json['lol']  # this is the 'string' of the card
+        game.cast_lol(player, card)
+        print("after cast lol")
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"{player} cast a Lol"}), room=gid)
+    except Exception as e:
+        print(traceback.print_exc())
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
+
+
+
 @app.route('/games/<gid>/next', methods=['PUT'])
 @cross_origin()
 @utils.authenticate_with_cookie_token
