@@ -86,3 +86,9 @@ Have fun playing different players from different browsers.
 
 ### Release
 From the server run `sudo bash startprod.sh`
+
+### Inspect game state
+Go into redis container and look at game json:
+
+`docker exec -it gamescache redis-cli`
+`hget games yellow-bird`
