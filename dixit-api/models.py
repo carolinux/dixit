@@ -424,6 +424,7 @@ class Game:
             self.currentRound['narratorCard'] = None
             self.currentRound['phrase'] = None
             self.currentRound['allCards'] = []
+            self.currentRound['lols'] = {}
             self.allocate_cards()
             self.currentState = WAITING_FOR_NARRATOR
 
