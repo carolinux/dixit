@@ -19,9 +19,16 @@ export default function HandCard(props) {
   const pictureUrl = `${process.env.PUBLIC_URL}/resources/pictures/cards/medusa/${card}.jpg`;
   const classes = useStyles();
 
+  const handleDrop = (emoji, emojiIndex, cardIndex) => {
+  console.log("dropped emoji "+emojiIndex)
+
+};
+
   return (
     <Card raised className={ classes.cardContainer }>
       <CardMedia
+
+       onDrop={(emoji, emojiIndex) => handleDrop(emoji, emojiIndex)}
         className={ classes.card }
         image={ pictureUrl } />
                {cardStatuses && cardStatuses.myPlayed  && cardStatuses.myPlayed === card && gameState === "waiting_for_votes" &&
