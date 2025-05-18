@@ -17,7 +17,7 @@ import phraseSound from './assets/sounds/phrase.mp3'
 import startSound from './assets/sounds/start.mp3'
 import { KeyboardArrowDown } from '@material-ui/icons';
 import Divider from '@material-ui/core/Divider';
-import Lols from './Lols'
+//import Lols from './Lols'
 import io from 'socket.io-client';
 
 
@@ -252,9 +252,6 @@ export default function Board(props) {
           <Phrase phrase={phrase}/>
         </Grid>
 
-       <Grid item sm={12} className={[classes.grid, classes.gridb]}>
-          <Lols/>
-        </Grid>
 
 
 
