@@ -58,6 +58,7 @@ class Game:
     creator: str
     stats: dict
     lolPoints: LolPoints
+    ai_players: list
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -68,7 +69,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None):
         if id is not None:
             self.id = id
         else:
@@ -123,10 +124,14 @@ class Game:
             self.lolPoints = LolPoints({})
             for player in self.players:
                 self.lolPoints.add_player(player)
+        if ai_players is not None:
+            self.ai_players = ai_players
+        else:
+            self.ai_players = []
 
     def start_rematch(self) -> None:
         """Reset game to allow rematch."""
-        self.__init__(id=self.id, players=self.players, creator=self.creator)
+        self.__init__(id=self.id, players=self.players, creator=self.creator, ai_players=self.ai_players)
 
     def init_cards(self, deck_name=None):
         # TODO: allow to choose different deck name
@@ -180,7 +185,7 @@ class Game:
     def get_player_info(self):
         return [{"name": p, 'isNarrator': self.is_narrator(p), 'hasVoted': self.has_voted(p),
                  'hasSetCard': self.has_set_card(p), 'score': self.get_score(p),
-                 'roundScore': self.get_round_score(p)} for p in self.players]
+                 'roundScore': self.get_round_score(p), 'isAI': self.is_ai_player(p)} for p in self.players]
 
     def get_score(self, player):
         if not self.is_started() or self.is_abandoned():
@@ -224,6 +229,35 @@ class Game:
 
     def is_creator(self, player):
         return player == self.creator
+
+    def is_ai_player(self, player: str) -> bool:
+        return player in self.ai_players
+
+    def add_ai_player(self, name: str = None) -> str:
+        """Add an AI player to the game. Returns the AI player's name."""
+        if self.is_started():
+            raise Exception("Cannot add AI player to a game that has already started.")
+        if len(self.players) >= MAX_PLAYERS:
+            raise Exception("Game is full. Cannot add more players.")
+
+        # Generate unique AI name if not provided
+        if name is None:
+            ai_names = ['Aristotle', 'Plato', 'Socrates', 'Pythagoras', 'Archimedes',
+                       'Euclid', 'Thales', 'Heraclitus', 'Democritus', 'Epicurus']
+            for ai_name in ai_names:
+                if ai_name not in self.players:
+                    name = ai_name
+                    break
+            if name is None:
+                # Fallback if all names are taken
+                name = f"AI-{len(self.ai_players) + 1}"
+
+        if name in self.players:
+            raise Exception(f"Player with name {name} already in game.")
+
+        self.players.append(name)
+        self.ai_players.append(name)
+        return name
 
     def get_card_statuses(self, player):
         if self.currentState == WAITING_FOR_PLAYERS:
@@ -371,6 +405,8 @@ class Game:
 
         if not self.is_started():
             self.players.remove(player)
+            if player in self.ai_players:
+                self.ai_players.remove(player)
             return
 
         if len(self.players) == MIN_PLAYERS:

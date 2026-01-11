@@ -150,6 +150,17 @@ export default function Board(props) {
   })
   };
 
+  const addAiPlayer = () => {
+    axiosWithCookies.post(process.env.REACT_APP_API_URL + '/games/' + gid + '/add-ai', {})
+      .then(resp => {
+        let game = resp.data.game;
+        updateFromApi(game);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
   const updateState = async (message) => {
     axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/' + gid)
      .then(resp => {
@@ -268,6 +279,10 @@ export default function Board(props) {
 
         {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
           {texts.stateTransitions.start}
+        </Button>
+        }
+        {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='secondary' onClick={() => addAiPlayer()} className={classes.control}>
+          Add AI Player
         </Button>
         }
         {gameState==="round_revealed" && <Button size='medium' color='primary' onClick={() => transitionGame('next')} className={classes.control}>
