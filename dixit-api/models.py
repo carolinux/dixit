@@ -235,22 +235,21 @@ class Game:
 
     def add_ai_player(self, name: str = None) -> str:
         """Add an AI player to the game. Returns the AI player's name."""
+        from cute_ids import generate_cute_id
+
         if self.is_started():
             raise Exception("Cannot add AI player to a game that has already started.")
         if len(self.players) >= MAX_PLAYERS:
             raise Exception("Game is full. Cannot add more players.")
 
-        # Generate unique AI name if not provided
+        # Generate unique AI name using cute_ids if not provided
         if name is None:
-            ai_names = ['Aristotle', 'Plato', 'Socrates', 'Pythagoras', 'Archimedes',
-                       'Euclid', 'Thales', 'Heraclitus', 'Democritus', 'Epicurus']
-            for ai_name in ai_names:
-                if ai_name not in self.players:
-                    name = ai_name
+            for _ in range(10):
+                name = generate_cute_id()
+                if name not in self.players:
                     break
-            if name is None:
-                # Fallback if all names are taken
-                name = f"AI-{len(self.ai_players) + 1}"
+            else:
+                name = f"ai-{len(self.ai_players) + 1}"
 
         if name in self.players:
             raise Exception(f"Player with name {name} already in game.")

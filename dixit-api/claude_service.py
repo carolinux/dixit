@@ -1,8 +1,7 @@
 """
-Claude service for AI player functionality in Dixit.
+AI service for Dixit game.
 
-Uses pre-generated card descriptions and clues for offline play.
-No API key required - all data is pre-computed.
+Uses pre-generated card descriptions and clues for AI player decisions.
 """
 
 import json
@@ -57,7 +56,8 @@ def generate_narrator_clue(card_id: int) -> str:
     fallbacks = [
         "Dreams within dreams", "The hidden path", "Whispers of time",
         "Between worlds", "Silent echoes", "The forgotten door",
-        "Mysterious journey", "Beyond the veil", "Secret garden"
+        "Mysterious journey", "Beyond the veil", "Secret garden", "Lost in thought",
+        "E motion", "Chasing shadows", "Wings of imagination", "Colors of the mind",
     ]
     return random.choice(fallbacks)
 

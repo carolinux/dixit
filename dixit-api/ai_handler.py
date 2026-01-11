@@ -2,7 +2,6 @@
 AI Handler for Dixit game.
 
 Processes AI player turns based on the current game state.
-Uses Claude API via claude_service for decision making.
 """
 
 import json
@@ -85,14 +84,14 @@ def _process_ai_turns_internal(game: Game, redis_client, socketio, gid: str):
 
 
 def _handle_ai_narrator(game: Game, redis_client, socketio, gid: str):
-    """AI generates clue using Claude Vision API and plays narrator card."""
+    """AI selects a card and generates a clue from pre-generated data."""
     narrator = game.get_narrator()
     hand = game.currentRound['allocations'][narrator]
 
     # Select a random card from hand
     card = random.choice(hand)
 
-    # Generate clue using Vision API
+    # Get a clue from pre-generated data
     phrase = claude_service.generate_narrator_clue(card)
 
     # Play the card
@@ -114,7 +113,7 @@ def _handle_ai_decoy(game: Game, player: str, redis_client, socketio, gid: str):
     # Get descriptions for cards in hand
     hand_descriptions = {c: claude_service.get_card_description(c) for c in hand}
 
-    # Use Claude to select best matching card
+    # Select best matching card using keyword matching
     try:
         card = claude_service.select_best_card(phrase, hand_descriptions)
         # Validate the card is in hand
@@ -147,7 +146,7 @@ def _handle_ai_vote(game: Game, player: str, redis_client, socketio, gid: str):
     # Get descriptions for votable cards
     card_descriptions = {c: claude_service.get_card_description(c) for c in votable_cards}
 
-    # Use Claude to vote
+    # Vote using keyword matching
     try:
         voted_card = claude_service.vote_for_card(phrase, card_descriptions)
         # Validate the card is votable
