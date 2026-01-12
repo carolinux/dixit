@@ -14,6 +14,8 @@ import Typography from '@material-ui/core/Typography';
 import CardMedia from '@material-ui/core/CardMedia';
 import clickCardSound from './assets/sounds/playCard.mp3'
 import clickCardErrorSound from './assets/sounds/error.mp3'
+import { useDrop } from 'react-dnd';
+import { ItemTypes } from './LolEmoji';
 
 const useStyles = makeStyles(() => ({
   root: {
@@ -48,8 +50,33 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
+const DroppableCard = ({ card, cardStatuses, gameState, onClick, onLolDrop, canDrop }) => {
+  const [{ isOver, canDropHere }, drop] = useDrop(() => ({
+    accept: ItemTypes.LOL_EMOJI,
+    drop: () => onLolDrop(card),
+    canDrop: () => canDrop,
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+      canDropHere: !!monitor.canDrop(),
+    }),
+  }), [card, canDrop, onLolDrop]);
+
+  return (
+    <Button
+      ref={drop}
+      onClick={onClick}
+      style={{
+        backgroundColor: isOver && canDropHere ? 'rgba(255, 215, 0, 0.3)' : 'transparent',
+        border: isOver && canDropHere ? '2px dashed gold' : 'none',
+      }}
+    >
+      <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} />
+    </Button>
+  );
+};
+
 export default function CardsPlayed(props) {
-  const { cards, gameState, isNarrator, transitionGame, cardStatuses} = { ...props };
+  const { cards, gameState, isNarrator, transitionGame, cardStatuses, castLol } = { ...props };
    const [open, setOpen] = useState(false);
   const [cardToSelect, setCardToSelect] = useState(undefined);
   const classes = useStyles();
@@ -102,9 +129,15 @@ export default function CardsPlayed(props) {
   <Fragment>
       <div className={classes.root}  >
         {showDialog && cards.map((card, i) =>
-          <Button key={card+'_'+i} onClick={() => play(card)}>
-            <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} />
-          </Button>)
+          <DroppableCard
+            key={card+'_'+i}
+            card={card}
+            cardStatuses={cardStatuses}
+            gameState={gameState}
+            onClick={() => play(card)}
+            onLolDrop={castLol}
+            canDrop={cardStatuses && cardStatuses.myPlayed !== card}
+          />)
         }
 
         {!showDialog && cards.map((card,i) =>

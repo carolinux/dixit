@@ -17,7 +17,9 @@ import phraseSound from './assets/sounds/phrase.mp3'
 import startSound from './assets/sounds/start.mp3'
 import { KeyboardArrowDown } from '@material-ui/icons';
 import Divider from '@material-ui/core/Divider';
-//import Lols from './Lols'
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import LolEmoji from './LolEmoji';
 import io from 'socket.io-client';
 
 
@@ -161,6 +163,17 @@ export default function Board(props) {
       });
   };
 
+  const castLol = (card) => {
+    axiosWithCookies.put(process.env.REACT_APP_API_URL + '/games/' + gid + '/lol', { lol: card })
+      .then(resp => {
+        let game = resp.data.game;
+        updateFromApi(game);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
   const updateState = async (message) => {
     axiosWithCookies.get(process.env.REACT_APP_API_URL+ '/games/' + gid)
      .then(resp => {
@@ -234,6 +247,7 @@ export default function Board(props) {
 
 
   return (
+    <DndProvider backend={HTML5Backend}>
     <Container>
       <Grid container>
 
@@ -256,7 +270,22 @@ export default function Board(props) {
 
 
         <Grid item sm={10} className={[classes.cardsPlayed, classes.grid, classes.gridtr]}>
-           <CardsPlayed cards={playedCards} gameState={gameState} isNarrator={isNarrator} transitionGame={transitionGame}  cardStatuses={cardStatuses}/>
+           {gameState === 'waiting_for_votes' && !isNarrator && !cardStatuses.myLolled && (
+             <div style={{ display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
+               <LolEmoji />
+               <Typography variant="body2" style={{ fontFamily: 'Lobster' }}>
+                 Drag to a card that made you laugh!
+               </Typography>
+             </div>
+           )}
+           {gameState === 'waiting_for_votes' && !isNarrator && cardStatuses.myLolled && (
+             <div style={{ display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
+               <Typography variant="body2" style={{ fontFamily: 'Lobster' }}>
+                 😂 Lol given!
+               </Typography>
+             </div>
+           )}
+           <CardsPlayed cards={playedCards} gameState={gameState} isNarrator={isNarrator} transitionGame={transitionGame} cardStatuses={cardStatuses} castLol={castLol}/>
         </Grid>
 
          <Grid item sm={12} className={[classes.grid, classes.gridb]}>
@@ -319,5 +348,6 @@ export default function Board(props) {
 
       </Grid>
     </Container>
+    </DndProvider>
   );
 }

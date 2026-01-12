@@ -40,6 +40,13 @@ export default function HandCard(props) {
 
             </CardContent>}
 
+            {cardStatuses && cardStatuses.myLolled && cardStatuses.myLolled === card && gameState === "waiting_for_votes" &&
+                <CardContent>
+              <Typography style={{ fontSize: '24px' }}>
+               😂
+              </Typography>
+            </CardContent>}
+
             {cardStatuses && cardStatuses.summary  && cardStatuses.summary[card] && gameState === "round_revealed" &&
                 <CardContent>
               <Typography>
@@ -47,9 +54,13 @@ export default function HandCard(props) {
                {cardStatuses.summary[card].isNarrator && <span style={{'color':'green', fontFamily: 'Lobster' }}>{cardStatuses.summary[card].player}</span>}
                {!cardStatuses.summary[card].isNarrator && <span style={{'color':'#CB4C4E', fontFamily: 'Lobster' }}>{cardStatuses.summary[card].player}</span>}
                {cardStatuses.summary[card].votes.length>0 &&
-                cardStatuses.summary[card].votes.map((voter) => <ListItem style={{textAlign: 'left'}}><HowToVote/>{voter}</ListItem>)
+                cardStatuses.summary[card].votes.map((voter) => <ListItem key={voter} style={{textAlign: 'left'}}><HowToVote/>{voter}</ListItem>)
                }
-
+               {cardStatuses.summary[card].lols && cardStatuses.summary[card].lols.length > 0 && (
+                <div style={{ marginTop: '4px', fontSize: '18px' }}>
+                  😂 x {cardStatuses.summary[card].lols.length}
+                </div>
+               )}
 
               </Typography>
 
