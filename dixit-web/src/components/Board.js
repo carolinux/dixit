@@ -281,7 +281,7 @@ export default function Board(props) {
           {texts.stateTransitions.start}
         </Button>
         }
-        {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='secondary' onClick={() => addAiPlayer()} className={classes.control}>
+        {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => addAiPlayer()} className={classes.control}>
           Add AI Player
         </Button>
         }
