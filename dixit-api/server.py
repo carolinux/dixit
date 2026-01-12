@@ -9,6 +9,7 @@ from models import Game
 from datastore import get_game_by_id, get_all_games, add_game, update_game, get_locked_game_by_id, LockingException, release_lock
 import utils
 import conf
+import ai_handler
 import atexit
 import logging
 
@@ -278,6 +279,8 @@ def games_start(gid, jwt_data=None):
         game.start()
         update_game(red, game)
         socketio.emit('update', json.dumps({'data': "Game started"}), room=gid)
+        # Process AI turns in background
+        socketio.start_background_task(ai_handler.process_ai_turns, red, socketio, gid)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -302,6 +305,8 @@ def games_set_card(gid, jwt_data=None):
             socketio.emit('update', json.dumps({'data': f"{player} chose their narrator card"}), room=gid)
         else:
             socketio.emit('update', json.dumps({'data': f"{player} chose their decoy card"}), room=gid)
+        # Process AI turns in background
+        socketio.start_background_task(ai_handler.process_ai_turns, red, socketio, gid)
     except Exception as e:
         print(e)
         flask.abort(400)
@@ -321,6 +326,8 @@ def games_vote_card(gid, jwt_data=None):
         print("after cast vote")
         update_game(red, game)
         socketio.emit('update', json.dumps({'data': f"{player} cast their vote"}), room=gid)
+        # Process AI turns in background
+        socketio.start_background_task(ai_handler.process_ai_turns, red, socketio, gid)
     except Exception as e:
         print(traceback.print_exc())
         flask.abort(400, str(e))
@@ -357,6 +364,8 @@ def games_next_round(gid, jwt_data=None):
         game.start_next_round()
         update_game(red, game)
         socketio.emit('update', json.dumps({'data': "Next round started"}), room=gid)
+        # Process AI turns in background
+        socketio.start_background_task(ai_handler.process_ai_turns, red, socketio, gid)
     except Exception as e:
         print(e)
         flask.abort(400, str(e))
@@ -415,6 +424,25 @@ def remove_player(gid, player_to_remove, jwt_data=None):
     return jsonify({"game": game_data})
 
 
+@app.route('/games/<gid>/add-ai', methods=['POST'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def add_ai_player(gid, jwt_data=None):
+    """Add an AI player to the game. Only the creator can do this."""
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    try:
+        if not game.is_creator(player):
+            flask.abort(403, "Only the game creator can add AI players")
+        ai_name = request.json.get('name', None) if request.json else None
+        added_name = game.add_ai_player(ai_name)
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"AI player {added_name} joined the game"}), room=gid)
+    except Exception as e:
+        import traceback
+        print(traceback.print_exc())
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
 
 
 @socketio.on('join')
