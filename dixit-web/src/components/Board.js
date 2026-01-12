@@ -258,6 +258,16 @@ export default function Board(props) {
                      <Typography variant='body1'>
           Cards will appear here when played.
         </Typography>
+        {gameState === 'waiting_for_votes' && !isNarrator && !cardStatuses.myLolled && (
+          <div style={{ marginTop: '8px' }}>
+            <LolEmoji />
+          </div>
+        )}
+        {gameState === 'waiting_for_votes' && !isNarrator && cardStatuses.myLolled && (
+          <div style={{ marginTop: '8px', fontFamily: 'Lobster' }}>
+            😂 Lol given!
+          </div>
+        )}
 
              <Typography variant='h3' className={classes.title}>
              <p></p><p></p>
@@ -270,21 +280,6 @@ export default function Board(props) {
 
 
         <Grid item sm={10} className={[classes.cardsPlayed, classes.grid, classes.gridtr]}>
-           {gameState === 'waiting_for_votes' && !isNarrator && !cardStatuses.myLolled && (
-             <div style={{ display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
-               <LolEmoji />
-               <Typography variant="body2" style={{ fontFamily: 'Lobster' }}>
-                 Drag to a card that made you laugh!
-               </Typography>
-             </div>
-           )}
-           {gameState === 'waiting_for_votes' && !isNarrator && cardStatuses.myLolled && (
-             <div style={{ display: 'flex', alignItems: 'center', padding: '8px', gap: '8px' }}>
-               <Typography variant="body2" style={{ fontFamily: 'Lobster' }}>
-                 😂 Lol given!
-               </Typography>
-             </div>
-           )}
            <CardsPlayed cards={playedCards} gameState={gameState} isNarrator={isNarrator} transitionGame={transitionGame} cardStatuses={cardStatuses} castLol={castLol}/>
         </Grid>
 
