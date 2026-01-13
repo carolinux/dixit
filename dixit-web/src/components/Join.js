@@ -76,14 +76,28 @@ export default function Join(props) {
             history.push('/board/'+res.data['game']);
           })
           .catch(error => {
-            console.log("could not join game")
-            joiningInProgress = false;
-            alert("Could not join game. Round may be in progress.    Please try again later.")
+            console.log("could not join game directly, trying lobby request")
+            // Try to request join via lobby
+            requestLobbyJoin();
           })
       };
       postData();
-      //joiningInProgress = false;
+    }
+  }
 
+  const requestLobbyJoin = async () => {
+    try {
+      await axiosWithCookies.post(
+        process.env.REACT_APP_API_URL + '/games/' + gameId + '/request-join',
+        { player: playerName }
+      );
+      // Redirect to lobby waiting page
+      history.push('/lobby/' + gameId + '/' + encodeURIComponent(playerName));
+    } catch (error) {
+      console.log("could not request lobby join", error);
+      joiningInProgress = false;
+      const errorMessage = error.response?.data?.message || error.response?.data || "Could not join game. Please try again later.";
+      alert(errorMessage);
     }
   }
 

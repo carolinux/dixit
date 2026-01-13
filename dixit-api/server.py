@@ -165,6 +165,11 @@ def board(gid, jwt_data=None):
 def board_winners(gid):
     return render_template("index.html")
 
+
+@app.route("/lobby/<gid>/<player_name>")
+def lobby_waiting(gid, player_name):
+    return render_template("index.html")
+
 ## End of React Routes ##
 
 
@@ -440,6 +445,78 @@ def add_ai_player(gid, jwt_data=None):
     except Exception as e:
         import traceback
         print(traceback.print_exc())
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
+
+
+@app.route('/games/<gid>/request-join', methods=['POST'])
+@cross_origin()
+def request_join(gid):
+    """Request to join an in-progress game. Player goes into lobby."""
+    player_name = request.json.get('player')
+    if not player_name:
+        flask.abort(400, "Player name is required")
+
+    try:
+        game = get_locked_game_by_id(red, gid)
+    except LockingException:
+        flask.abort(400, "Could not acquire lock for game")
+
+    if game is None:
+        release_lock(red, gid)
+        flask.abort(404, f"Game {gid} not found")
+
+    try:
+        game.request_join(player_name)
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"{player_name} is requesting to join"}), room=gid)
+    except Exception as e:
+        release_lock(red, gid)
+        flask.abort(400, str(e))
+
+    return jsonify({"status": "pending", "game": gid})
+
+
+@app.route('/games/<gid>/lobby-status/<player_name>', methods=['GET'])
+@cross_origin()
+def lobby_status(gid, player_name):
+    """Get lobby status for a player. Used for polling."""
+    game = get_game_by_id(red, gid)
+    if game is None:
+        flask.abort(404, f"Game {gid} not found")
+
+    status = game.get_lobby_status(player_name)
+    return jsonify(status)
+
+
+@app.route('/games/<gid>/approve-join/<player_to_approve>', methods=['PUT'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def approve_join(gid, player_to_approve, jwt_data=None):
+    """Approve a player's request to join. Only creator can do this."""
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    try:
+        game.approve_join(player, player_to_approve)
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"{player_to_approve} was approved to join"}), room=gid)
+    except Exception as e:
+        flask.abort(400, str(e))
+    game_data = game.serialize_for_status_view(player)
+    return jsonify({"game": game_data})
+
+
+@app.route('/games/<gid>/deny-join/<player_to_deny>', methods=['PUT'])
+@cross_origin()
+@utils.authenticate_with_cookie_token
+def deny_join(gid, player_to_deny, jwt_data=None):
+    """Deny a player's request to join. Only creator can do this."""
+    game, player = get_locked_authenticated_game_and_player_or_error(gid, jwt_data, lock=True)
+    try:
+        game.deny_join(player, player_to_deny)
+        update_game(red, game)
+        socketio.emit('update', json.dumps({'data': f"{player_to_deny}'s request to join was denied"}), room=gid)
+    except Exception as e:
         flask.abort(400, str(e))
     game_data = game.serialize_for_status_view(player)
     return jsonify({"game": game_data})
