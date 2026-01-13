@@ -39,7 +39,7 @@ class LolPoints:
             print("Cannot vote for self")
             return False
 
-        self.playerToRem[player]-=1
+        self.playerToRem[voter]-=1
         return True
 
 
@@ -262,7 +262,7 @@ class Game:
         if self.currentState == WAITING_FOR_PLAYERS:
             return {'myPlayed': self.get_played_card(player), 'myVoted': '', 'summary': {}}
         if self.currentState == WAITING_FOR_VOTES:
-            return {'myPlayed': self.get_played_card(player), 'myVoted': self.get_voted_card(player), 'summary': {}}
+            return {'myPlayed': self.get_played_card(player), 'myVoted': self.get_voted_card(player), 'myLolled': self.get_lolled_card(player), 'summary': {}}
         elif self.currentState == ROUND_REVEALED:
             return {'myPlayed': self.get_played_card(player), 'myVoted': self.get_voted_card(player), 'summary': self.get_all_cards_summary()}
         return {}
@@ -311,6 +311,9 @@ class Game:
         if not self.is_narrator(player):
             return self.currentRound.get('votes', {}).get(player, '')
         return ''
+
+    def get_lolled_card(self, player):
+        return self.currentRound.get('lols', {}).get(player, '')
 
     def get_narrator(self):
         if self.narratorIdx is not None:
@@ -504,6 +507,8 @@ class Game:
         # for the extra pointz
         for player, card in self.currentRound['decoys'].items():
             card_to_player[card] = player
+        # include narrator's card
+        card_to_player[self.get_narrator_card()] = self.get_narrator()
 
         correct_votes = votes_to_card.get(self.get_narrator_card(), 0)
         if 0 < correct_votes < self.num() - 1:
@@ -516,22 +521,25 @@ class Game:
             for p in self.get_non_narrators():
                 scores[p] = 2
 
-        for card, votes in votes_to_card.items():
+        for card, num_votes in votes_to_card.items():
             if card == self.get_narrator_card():
                 continue
             trickster = card_to_player[card]
             if trickster not in scores:
                 scores[trickster] = 0
-            scores[trickster] += votes
-            self.stats['tricksters'][trickster] += votes
+            scores[trickster] += num_votes
+            self.stats['tricksters'][trickster] += num_votes
 
         for p in self.players:
             self.scores[p] += scores.get(p, 0)
 
-        for voter, card in self.currentRound['lols']:
+        for voter, card in self.currentRound['lols'].items():
             votee = card_to_player[card]
             if self.lolPoints.cast_vote(voter, votee):
                 self.scores[votee]+=1
+                if votee not in scores:
+                    scores[votee] = 0
+                scores[votee]+=1
         self.currentRound['scores'] = scores
 
     def cast_vote(self, player, card):
@@ -551,7 +559,7 @@ class Game:
     def cast_lol(self, player, card):
         if self.currentState != WAITING_FOR_VOTES:
             raise Exception("Trying to lol at an invalid point in the game")
-        if (not self.is_narrator() and card == self.currentRound['decoys'][player]) or (self.is_narrator() and self.currentRound.get("narratorCard") == card):
+        if (not self.is_narrator(player) and card == self.currentRound['decoys'][player]) or (self.is_narrator(player) and self.currentRound.get("narratorCard") == card):
             raise Exception("Trying to lol for own card, which is not allowed")
         self.currentRound['lols'][player] = card
 
