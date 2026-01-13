@@ -6,6 +6,7 @@ import Create from './Create';
 import Join from './Join';
 import Board from './Board';
 import Winners from './Winners';
+import LobbyWaiting from './LobbyWaiting';
 
 function AppContainer(props) {
 
@@ -17,6 +18,9 @@ function AppContainer(props) {
         </Route>
         <Route path='/join/:preSelectedGid'>
           <Join/>
+        </Route>
+        <Route path='/lobby/:gid/:playerName'>
+          <LobbyWaiting/>
         </Route>
         <Route path='/board/:gid/winners'>
           <Winners/>

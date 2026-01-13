@@ -43,6 +43,11 @@ class LolPoints:
         return True
 
 
+LOBBY_PENDING = "pending"
+LOBBY_APPROVED = "approved"
+LOBBY_DENIED = "denied"
+
+
 @dataclass
 class Game:
     id: str
@@ -59,6 +64,7 @@ class Game:
     stats: dict
     lolPoints: LolPoints
     ai_players: list
+    lobby: list  # list of {name: str, status: 'pending'|'approved'|'denied'}
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -69,7 +75,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None, lobby=None):
         if id is not None:
             self.id = id
         else:
@@ -128,6 +134,10 @@ class Game:
             self.ai_players = ai_players
         else:
             self.ai_players = []
+        if lobby is not None:
+            self.lobby = lobby
+        else:
+            self.lobby = []
 
     def start_rematch(self) -> None:
         """Reset game to allow rematch."""
@@ -225,6 +235,11 @@ class Game:
         data['isNarrator'] = self.is_narrator(player)
         data['isCreator'] = self.is_creator(player)
         data['lolPoints'] = self.lolPoints.playerToRem.get(player, 0)
+        # Include lobby info for creator
+        if self.is_creator(player):
+            data['lobby'] = self.get_pending_lobby()
+        else:
+            data['lobby'] = []
         return data
 
     def is_creator(self, player):
@@ -387,6 +402,85 @@ class Game:
         if len(self.players) >= MAX_PLAYERS:
             raise Exception("Game {} is full".format(self.id))
         self.players.append(player_name)
+
+    def request_join(self, player_name: str) -> None:
+        """Request to join an in-progress game. Player goes into lobby."""
+        if self.is_abandoned():
+            raise Exception("Cannot request to join abandoned game.")
+        if self.has_ended():
+            raise Exception("Cannot request to join ended game.")
+        if not player_name:
+            raise Exception("Player name cannot be empty")
+        if player_name in self.players:
+            raise Exception("Player {} is already in the game.".format(player_name))
+        # Check if already in lobby
+        for entry in self.lobby:
+            if entry['name'] == player_name:
+                if entry['status'] == LOBBY_DENIED:
+                    raise Exception("Your request to join was denied.")
+                # Already in lobby, just return
+                return
+        if len(self.players) + len([e for e in self.lobby if e['status'] == LOBBY_APPROVED]) >= MAX_PLAYERS:
+            raise Exception("Game is full.")
+        self.lobby.append({'name': player_name, 'status': LOBBY_PENDING})
+
+    def approve_join(self, approver: str, player_name: str) -> None:
+        """Approve a player's request to join. Only creator can do this."""
+        if not self.is_creator(approver):
+            raise Exception("Only the game creator can approve join requests.")
+        for entry in self.lobby:
+            if entry['name'] == player_name:
+                if entry['status'] == LOBBY_PENDING:
+                    entry['status'] = LOBBY_APPROVED
+                    return
+                else:
+                    raise Exception("Player {} is not pending approval.".format(player_name))
+        raise Exception("Player {} is not in the lobby.".format(player_name))
+
+    def deny_join(self, denier: str, player_name: str) -> None:
+        """Deny a player's request to join. Only creator can do this."""
+        if not self.is_creator(denier):
+            raise Exception("Only the game creator can deny join requests.")
+        for entry in self.lobby:
+            if entry['name'] == player_name:
+                entry['status'] = LOBBY_DENIED
+                return
+        raise Exception("Player {} is not in the lobby.".format(player_name))
+
+    def get_lobby_status(self, player_name: str) -> dict:
+        """Get lobby status for a specific player."""
+        # Check if player is already in game
+        if player_name in self.players:
+            return {'status': 'joined', 'gameState': self.currentState}
+        # Check lobby
+        for entry in self.lobby:
+            if entry['name'] == player_name:
+                return {'status': entry['status'], 'gameState': self.currentState}
+        return {'status': 'not_found', 'gameState': self.currentState}
+
+    def get_pending_lobby(self) -> list:
+        """Get list of players waiting for approval."""
+        return [entry for entry in self.lobby if entry['status'] == LOBBY_PENDING]
+
+    def get_approved_lobby(self) -> list:
+        """Get list of approved players waiting to join."""
+        return [entry for entry in self.lobby if entry['status'] == LOBBY_APPROVED]
+
+    def process_lobby(self) -> list:
+        """Add approved lobby players to the game. Called at start of next round.
+        Returns list of players that were added."""
+        added_players = []
+        for entry in self.lobby[:]:  # iterate over copy
+            if entry['status'] == LOBBY_APPROVED:
+                player_name = entry['name']
+                if len(self.players) < MAX_PLAYERS:
+                    self.players.append(player_name)
+                    self.lolPoints.add_player(player_name)
+                    self.scores[player_name] = 0
+                    self.stats['tricksters'][player_name] = 0
+                    added_players.append(player_name)
+                    self.lobby.remove(entry)
+        return added_players
 
     def remove_player(self, remover: str, player: str) -> None:
 
@@ -583,6 +677,9 @@ class Game:
             if did_end:
                 return
 
+        # Process approved lobby players before starting next round
+        added_from_lobby = self.process_lobby()
+
         if advance_narrator:
             self.advance_narrator()
 
@@ -596,6 +693,8 @@ class Game:
         self.update_discard_pile(self.sealedRounds[-1])
         self.allocate_cards()
         self.currentState = WAITING_FOR_NARRATOR
+
+        return added_from_lobby
     def update_discard_pile(self, round):
         self.discards.extend(round['allCards'])
 

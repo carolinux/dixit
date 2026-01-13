@@ -161,6 +161,7 @@ export default function Board(props) {
   const [isCreator, setIsCreator] = useState(false);
   const [phrase, setPhrase] = useState('');
   const [socket, setSocket] = useState(null);
+  const [lobby, setLobby] = useState([]);
 
   let currTimeout = undefined;
   const messagesEndRef = useRef(null);
@@ -186,6 +187,7 @@ export default function Board(props) {
         setPlayers(game.playerList);
         setCards(game.roundInfo.hand);
         setPhrase(game.roundInfo.phrase);
+        setLobby(game.lobby || []);
         if (message) {
             let messages2 = messages;
             messages2.push(message);
@@ -232,6 +234,28 @@ export default function Board(props) {
 
   const castLol = (card) => {
     axiosWithCookies.put(process.env.REACT_APP_API_URL + '/games/' + gid + '/lol', { lol: card })
+      .then(resp => {
+        let game = resp.data.game;
+        updateFromApi(game);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
+  const approveJoin = (playerName) => {
+    axiosWithCookies.put(process.env.REACT_APP_API_URL + '/games/' + gid + '/approve-join/' + encodeURIComponent(playerName))
+      .then(resp => {
+        let game = resp.data.game;
+        updateFromApi(game);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
+  const denyJoin = (playerName) => {
+    axiosWithCookies.put(process.env.REACT_APP_API_URL + '/games/' + gid + '/deny-join/' + encodeURIComponent(playerName))
       .then(resp => {
         let game = resp.data.game;
         updateFromApi(game);
@@ -442,6 +466,42 @@ export default function Board(props) {
                 </div>
               )}
             </div>
+          </Grid>
+        )}
+
+        {/* Lobby Join Requests - only visible to creator */}
+        {isCreator && lobby.length > 0 && (
+          <Grid item sm={12} style={{ marginTop: 16, padding: 16, backgroundColor: 'rgba(255, 193, 7, 0.2)', borderRadius: 8 }}>
+            <Typography variant='h6' style={{ fontFamily: 'Lobster', marginBottom: 8 }}>
+              Players wanting to join:
+            </Typography>
+            {lobby.map((entry) => (
+              <div key={entry.name} style={{ display: 'flex', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+                <Typography style={{ marginRight: 8 }}>{entry.name}</Typography>
+                <Button
+                  size='small'
+                  variant='contained'
+                  style={{ backgroundColor: '#4caf50', color: 'white' }}
+                  onClick={() => approveJoin(entry.name)}
+                  disabled={gameState !== 'round_revealed'}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size='small'
+                  variant='contained'
+                  style={{ backgroundColor: '#f44336', color: 'white' }}
+                  onClick={() => denyJoin(entry.name)}
+                >
+                  Deny
+                </Button>
+                {gameState !== 'round_revealed' && (
+                  <Typography variant='caption' style={{ color: '#666' }}>
+                    (can approve at round end)
+                  </Typography>
+                )}
+              </div>
+            ))}
           </Grid>
         )}
 
