@@ -382,6 +382,11 @@ class Game:
     def join(self, player_name):
         if self.is_abandoned():
             raise Exception("Cannot join game that is abandoned.")
+
+        # Check if player is already in the game
+        if player_name in self.players:
+            raise Exception("Player with name {} already in game {}.".format(player_name, self.id))
+
         if self.is_started():
             print(f"{player_name} is trying to join game {self.id} that is in state {self.currentState}")
             if self.currentState not in (WAITING_FOR_NARRATOR, ROUND_REVEALED):
@@ -392,10 +397,6 @@ class Game:
             self.stats['tricksters'][player_name] = 0
             self.allocate_cards(player_name)
             return
-
-
-        if player_name in self.players:
-            raise Exception("Player with name {} already in game {}.".format(player_name, self.id))
         if not player_name:
             raise Exception("Player name cannot be empty")
 
@@ -479,8 +480,20 @@ class Game:
                     self.scores[player_name] = 0
                     self.stats['tricksters'][player_name] = 0
                     added_players.append(player_name)
-                    self.lobby.remove(entry)
+                    # Mark as joined instead of removing, so we can verify later
+                    entry['status'] = 'joined'
         return added_players
+
+    def was_added_from_lobby(self, player_name: str) -> bool:
+        """Check if a player was added to the game via the lobby system."""
+        for entry in self.lobby:
+            if entry['name'] == player_name and entry['status'] == 'joined':
+                return True
+        return False
+
+    def clear_lobby_entry(self, player_name: str) -> None:
+        """Remove a player's lobby entry after they've gotten their cookie."""
+        self.lobby = [e for e in self.lobby if e['name'] != player_name]
 
     def remove_player(self, remover: str, player: str) -> None:
 

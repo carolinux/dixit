@@ -202,9 +202,17 @@ def games_api():
             if uid in existing_joined_games:
                 # do not rejoin, silently re-direct the user to the board
                 return make_response(jsonify({"game": game.id}))
-            game.join(player_name)
-            update_game(red, game)
-            socketio.emit('update', json.dumps({'data': f"Player {player_name} joined game {game.id}"}), room=game.id)
+
+            # Check if player was added from lobby (already in game.players)
+            # In that case, just issue the cookie without calling join()
+            if game.was_added_from_lobby(player_name):
+                # Player was added via lobby, just issue the cookie and clear lobby entry
+                game.clear_lobby_entry(player_name)
+                update_game(red, game)
+            else:
+                game.join(player_name)
+                update_game(red, game)
+                socketio.emit('update', json.dumps({'data': f"Player {player_name} joined game {game.id}"}), room=game.id)
         except Exception as e:
             print(e)
             flask.abort(400, str(e))

@@ -483,7 +483,6 @@ export default function Board(props) {
                   variant='contained'
                   style={{ backgroundColor: '#4caf50', color: 'white' }}
                   onClick={() => approveJoin(entry.name)}
-                  disabled={gameState !== 'round_revealed'}
                 >
                   Approve
                 </Button>
@@ -495,11 +494,9 @@ export default function Board(props) {
                 >
                   Deny
                 </Button>
-                {gameState !== 'round_revealed' && (
-                  <Typography variant='caption' style={{ color: '#666' }}>
-                    (can approve at round end)
-                  </Typography>
-                )}
+                <Typography variant='caption' style={{ color: '#666' }}>
+                  (joins at next round)
+                </Typography>
               </div>
             ))}
           </Grid>
