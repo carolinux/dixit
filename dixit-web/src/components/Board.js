@@ -35,12 +35,13 @@ const useStyles = makeStyles(() => ({
 
     grid: {
     minWidth: 200,
-    //fontFamily: 'Lobster',
     textAlign: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    //borderRadius: '12px',
-
-    //borderRight: 1
+  },
+  boardContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    border: '3px solid #6a3805',
   },
 
   gridbl : {
@@ -340,7 +341,7 @@ export default function Board(props) {
   return (
     <DndProvider backend={HTML5Backend}>
     <Container>
-      <Grid container>
+      <Grid container className={classes.boardContainer}>
 
          <Grid item sm={2}  className={[classes.cardsPlayed, classes.grid, classes.gridtl]}  style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>
        <Typography variant='h3' className={classes.title}>

@@ -12,13 +12,15 @@ import { makeStyles } from '@material-ui/core/styles';
 const useStyles = makeStyles(() => ({
   players: {
     color: 'black',
-    backgroundColor: 'white'
-    //fontFamily: 'Lobster'
+    backgroundColor: 'white',
+    borderRadius: 8,
+    marginBottom: 4,
   },
   narrator: {
     color: 'black',
-    backgroundColor: '#c5e1a5'
-    //fontFamily: 'Lobster'
+    backgroundColor: '#c5e1a5',
+    borderRadius: 8,
+    marginBottom: 4,
   },
   title: {
     fontFamily: 'Lobster',
@@ -35,17 +37,20 @@ export default function Players(props) {
 
   return (
   <Fragment>
-  <Typography variant='h4' className={classes.title}>
-  Players
-  </Typography>
-  <List>
-    { players.map(player =>
-    <Fragment><ListItem className={player.isNarrator?classes.narrator:classes.players} key={player.name}>
-      <ListItemIcon  className={player.isNarrator?classes.narrator:classes.players} ><SportsEsportsOutlinedIcon  style={{ fill: 'green' }}/></ListItemIcon>
-      {player.name}: {player.score} {player.roundScore>0 && <span>(+{player.roundScore})</span> }
-       {player.isNarrator && <ArrowBack style={{ fill: 'green' }}/>}
-    </ListItem></Fragment> )}
-  </List>
+    <Typography variant='h4' className={classes.title}>
+      Players
+    </Typography>
+    <List>
+      { players.map(player =>
+      <ListItem className={player.isNarrator ? classes.narrator : classes.players} key={player.name}>
+        <ListItemIcon className={player.isNarrator ? classes.narrator : classes.players}>
+          <SportsEsportsOutlinedIcon style={{ fill: 'green' }}/>
+        </ListItemIcon>
+        {player.name}: {player.score} {player.roundScore > 0 && <span>(+{player.roundScore})</span>}
+        {player.isNarrator && <ArrowBack style={{ fill: 'green' }}/>}
+      </ListItem>
+      )}
+    </List>
   </Fragment>
   );
 }
