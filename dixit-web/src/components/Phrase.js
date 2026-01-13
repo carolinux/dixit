@@ -9,7 +9,12 @@ const useStyles = makeStyles(() => ({
     textAlign: 'center',
     color: 'purple',
     fontStyle: 'italic',
+    fontSize: '1.5rem',
     backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    padding: '12px 24px',
+    borderRadius: 8,
+    margin: '8px auto',
+    display: 'inline-block',
   }
 }));
 
