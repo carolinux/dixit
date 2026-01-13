@@ -63,6 +63,73 @@ const useStyles = makeStyles(() => ({
    gridl : {
       borderLeft: '2px solid #6a3805',
   },
+  adminPanel: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 8,
+    border: '1px solid rgba(0, 0, 0, 0.1)',
+  },
+  adminTitle: {
+    fontFamily: 'Lobster',
+    fontSize: '1.2rem',
+    color: '#6a3805',
+    marginBottom: 12,
+    borderBottom: '1px solid rgba(0, 0, 0, 0.1)',
+    paddingBottom: 8,
+  },
+  adminSection: {
+    marginBottom: 16,
+  },
+  adminSectionLabel: {
+    fontSize: '0.75rem',
+    color: '#666',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    marginBottom: 8,
+    fontWeight: 500,
+  },
+  buttonGroup: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  safeButton: {
+    backgroundColor: '#4caf50',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#388e3c',
+    },
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  neutralButton: {
+    backgroundColor: '#1976d2',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#1565c0',
+    },
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  dangerButton: {
+    backgroundColor: 'white',
+    color: 'black',
+    border: '1px solid #ccc',
+    '&:hover': {
+      backgroundColor: '#f5f5f5',
+    },
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  joinLink: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: '8px 12px',
+    borderRadius: 4,
+    fontSize: '0.85rem',
+    wordBreak: 'break-all',
+    marginTop: 8,
+  },
 }));
 
 export default function Board(props) {
@@ -299,47 +366,84 @@ export default function Board(props) {
           <EventsLog messages={messages} messagesEndRef={messagesEndRef}/>
         </Grid>
 
-        <Grid item sm={2}>
-
-        {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => transitionGame('start')} className={classes.control}>
-          {texts.stateTransitions.start}
-        </Button>
-        }
-        {isCreator && gameState==="waiting_to_start" && <Button size='medium' color='primary' onClick={() => addAiPlayer()} className={classes.control}>
-          Add AI Player
-        </Button>
-        }
-        {gameState==="round_revealed" && <Button size='medium' color='primary' onClick={() => transitionGame('next')} className={classes.control}>
-          {texts.stateTransitions.next}
-        </Button>
-        }
-
-
-
+        {/* Next Round Button - visible to all players */}
+        <Grid item sm={12}>
+          {gameState==="round_revealed" && (
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <Button size='large' onClick={() => transitionGame('next')} className={classes.safeButton}>
+                {texts.stateTransitions.next}
+              </Button>
+            </div>
+          )}
         </Grid>
-        <Grid item sm={5}>
-        </Grid>
-        <Grid item sm={3}>
-        {isCreator && gameState==="waiting_to_start" && <Typography>{process.env.REACT_APP_API_URL}/join/{gid} </Typography>}
-        </Grid>
-        <Grid item sm={2}>
-        {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('rematch')} className={classes.control}>
-          {texts.stateTransitions.rematch}
-        </Button>
-        }
-        {isCreator && <Button size='medium' color='primary' onClick={() => transitionGame('abandon')} className={classes.control}>
-          {texts.stateTransitions.abandon}
-        </Button>
-        }
 
-        {isCreator && players.map((player) =>
-            <Button size='medium' color='primary' onClick={() => transitionGame('remove/'+player.name)} className={classes.control}>
-          {texts.stateTransitions.remove} {player.name}
-          </Button>
-        )
-       }
+        {/* Admin Panel - only visible to game creator */}
+        {isCreator && (
+          <Grid item sm={12}>
+            <div className={classes.adminPanel}>
+              <Typography className={classes.adminTitle}>
+                🎮 Game Host Controls
+              </Typography>
 
-        </Grid>
+              {/* Game Setup Section - only during waiting_to_start */}
+              {gameState === "waiting_to_start" && (
+                <div className={classes.adminSection}>
+                  <Typography className={classes.adminSectionLabel}>
+                    Game Setup
+                  </Typography>
+                  <div className={classes.buttonGroup}>
+                    <Button size='medium' onClick={() => transitionGame('start')} className={classes.safeButton}>
+                      ▶ {texts.stateTransitions.start}
+                    </Button>
+                    <Button size='medium' onClick={() => addAiPlayer()} className={classes.neutralButton}>
+                      🤖 Add AI Player
+                    </Button>
+                  </div>
+                  <div className={classes.joinLink}>
+                    <strong>Invite link:</strong> {process.env.REACT_APP_API_URL}/join/{gid}
+                  </div>
+                </div>
+              )}
+
+              {/* Game Management Section */}
+              <div className={classes.adminSection}>
+                <Typography className={classes.adminSectionLabel}>
+                  Game Management
+                </Typography>
+                <div className={classes.buttonGroup}>
+                  <Button size='medium' onClick={() => transitionGame('rematch')} className={classes.neutralButton}>
+                    🔄 {texts.stateTransitions.rematch}
+                  </Button>
+                  <Button size='medium' variant='outlined' onClick={() => transitionGame('abandon')} className={classes.dangerButton}>
+                    ⚠️ {texts.stateTransitions.abandon}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Player Management Section */}
+              {players.length > 0 && (
+                <div className={classes.adminSection}>
+                  <Typography className={classes.adminSectionLabel}>
+                    Remove Players
+                  </Typography>
+                  <div className={classes.buttonGroup}>
+                    {players.map((player) => (
+                      <Button
+                        key={player.name}
+                        size='small'
+                        variant='outlined'
+                        onClick={() => transitionGame('remove/'+player.name)}
+                        className={classes.dangerButton}
+                      >
+                        ✕ {player.name}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Grid>
+        )}
 
       </Grid>
     </Container>
