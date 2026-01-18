@@ -22,6 +22,26 @@ INITIAL_LOLPOINTS = 3
 
 
 @dataclass
+class Deck:
+    name: str
+    max_card: int
+    image_folder: str
+    excluded_cards: set
+
+    def get_cards(self) -> List[int]:
+        all_cards = list(range(1, self.max_card + 1))
+        return [c for c in all_cards if c not in self.excluded_cards]
+
+
+# Deck definitions
+DECKS = {
+    "full": Deck("full", 135, "medusa", set()),
+    "kids": Deck("kids", 135, "medusa", {3, 15, 30, 41, 66, 89, 100, 125, 134}),
+    "classic": Deck("classic", 70, "original", set()),
+}
+
+
+@dataclass
 class LolPoints:
     playerToRem: dict
 
@@ -65,6 +85,7 @@ class Game:
     lolPoints: LolPoints
     ai_players: list
     lobby: list  # list of {name: str, status: 'pending'|'approved'|'denied'}
+    deck_name: str
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -75,7 +96,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None, lobby=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None, lobby=None, deck_name=None):
         if id is not None:
             self.id = id
         else:
@@ -104,6 +125,10 @@ class Game:
             self.narratorIdx = narratorIdx
         else:
             self.narratorIdx = None
+        if deck_name is not None:
+            self.deck_name = deck_name
+        else:
+            self.deck_name = "full"
         if cards is not None:
             self.cards = cards
         else:
@@ -141,11 +166,11 @@ class Game:
 
     def start_rematch(self) -> None:
         """Reset game to allow rematch."""
-        self.__init__(id=self.id, players=self.players, creator=self.creator, ai_players=self.ai_players)
+        self.__init__(id=self.id, players=self.players, creator=self.creator, ai_players=self.ai_players, deck_name=self.deck_name)
 
-    def init_cards(self, deck_name=None):
-        # TODO: allow to choose different deck name
-        return list(range(1, MAX_CARD + 1))
+    def init_cards(self):
+        deck = DECKS.get(self.deck_name, DECKS["full"])
+        return deck.get_cards()
 
     def create_playing_order(self):
         random.shuffle(self.cards)
@@ -240,6 +265,9 @@ class Game:
             data['lobby'] = self.get_pending_lobby()
         else:
             data['lobby'] = []
+        # Include deck info for card images
+        deck = DECKS.get(self.deck_name, DECKS["full"])
+        data['imageFolder'] = deck.image_folder
         return data
 
     def is_creator(self, player):

@@ -15,8 +15,8 @@ const useStyles = makeStyles(() => ({
 }));
 
 export default function HandCard(props) {
-  const { card, cardStatuses, gameState } = { ...props };
-  const pictureUrl = `${process.env.PUBLIC_URL}/resources/pictures/cards/medusa/${card}.jpg`;
+  const { card, cardStatuses, gameState, imageFolder = 'medusa' } = { ...props };
+  const pictureUrl = `${process.env.PUBLIC_URL}/resources/pictures/cards/${imageFolder}/${card}.jpg`;
   const classes = useStyles();
 
   return (

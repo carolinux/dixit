@@ -99,7 +99,7 @@ function shouldShowDialog(gameState, isNarrator, cardStatuses) {
 
 
 export default function Hand(props) {
-  const {isNarrator, player, cards, transitionGame, gameState, cardStatuses } = { ...props };
+  const {isNarrator, player, cards, transitionGame, gameState, cardStatuses, imageFolder = 'medusa' } = { ...props };
   const classes = useStyles();
   const [open, setOpen] = useState(false);
   const [cardToSelect, setCardToSelect] = useState(undefined);
@@ -176,13 +176,13 @@ export default function Hand(props) {
       <div className={classes.root}>
         {showDialog && cards.map((card, i) =>
           <Button key={card+'_'+i} onClick={() => play(card)}>
-            <HandCard card={card}/>
+            <HandCard card={card} imageFolder={imageFolder}/>
           </Button>)
         }
 
         {!showDialog && cards.map((card, i) =>
          <Button key={card+"_"+i} onClick={() => audioError.play()}>
-            <HandCard card={card}/>
+            <HandCard card={card} imageFolder={imageFolder}/>
           </Button>)
         }
 
@@ -192,7 +192,7 @@ export default function Hand(props) {
 
           <CardMedia
             className={classes.media}
-            image={`${process.env.PUBLIC_URL}/resources/pictures/cards/medusa/${cardToSelect}.jpg`} />
+            image={`${process.env.PUBLIC_URL}/resources/pictures/cards/${imageFolder}/${cardToSelect}.jpg`} />
 
           <Fragment>
             <Typography variant='h6' className={classes.dialog}>

@@ -163,6 +163,7 @@ export default function Board(props) {
   const [phrase, setPhrase] = useState('');
   const [socket, setSocket] = useState(null);
   const [lobby, setLobby] = useState([]);
+  const [imageFolder, setImageFolder] = useState('medusa');
 
   let currTimeout = undefined;
   const messagesEndRef = useRef(null);
@@ -189,6 +190,7 @@ export default function Board(props) {
         setCards(game.roundInfo.hand);
         setPhrase(game.roundInfo.phrase);
         setLobby(game.lobby || []);
+        setImageFolder(game.imageFolder || 'medusa');
         if (message) {
             let messages2 = messages;
             messages2.push(message);
@@ -372,7 +374,7 @@ export default function Board(props) {
 
 
         <Grid item sm={10} className={[classes.cardsPlayed, classes.grid, classes.gridtr]}>
-           <CardsPlayed cards={playedCards} gameState={gameState} isNarrator={isNarrator} transitionGame={transitionGame} cardStatuses={cardStatuses} castLol={castLol}/>
+           <CardsPlayed cards={playedCards} gameState={gameState} isNarrator={isNarrator} transitionGame={transitionGame} cardStatuses={cardStatuses} castLol={castLol} imageFolder={imageFolder}/>
         </Grid>
 
          <Grid item sm={12} className={[classes.grid, classes.gridb]}>
@@ -383,7 +385,7 @@ export default function Board(props) {
 
 
         <Grid item sm={10} className={[classes.grid, classes.cardsPlayed]}>
-          <Hand isNarrator={isNarrator} player={mainPlayer} cards={cards} transitionGame={transitionGame} gameState={gameState} cardStatuses={cardStatuses}/>
+          <Hand isNarrator={isNarrator} player={mainPlayer} cards={cards} transitionGame={transitionGame} gameState={gameState} cardStatuses={cardStatuses} imageFolder={imageFolder}/>
         </Grid>
 
          <Grid item sm={2} className={[classes.grid, classes.gridl, classes.cardsPlayed]} style={{ backgroundColor: 'rgba(128,0,128, 0.2)' }}>

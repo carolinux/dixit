@@ -6,6 +6,11 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
 import { useHistory, useParams } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
@@ -43,7 +48,8 @@ export default function Create(props) {
   const [playerName, setPlayerName] = useState('');
   const [usedName, setUsedName] = useState(false);
   const [formError, setFormError] = useState(false);
-  const [gameId, setGameId] = useState('new')
+  const [gameId, setGameId] = useState('new');
+  const [deck, setDeck] = useState('full');
   const axiosWithCookies = axios.create({
   withCredentials: true
 });
@@ -67,7 +73,7 @@ export default function Create(props) {
     if (!!playerName && !!gameId) {
     console.log(process.env)
       const postData = async () => {
-        axiosWithCookies.post(process.env.REACT_APP_API_URL+ '/games', { player: playerName, game: gameId })
+        axiosWithCookies.post(process.env.REACT_APP_API_URL+ '/games', { player: playerName, game: gameId, deck: deck })
           .then(res => {
             console.log(res.data);
             history.push('/board/'+res.data['game']);
@@ -105,6 +111,10 @@ export default function Create(props) {
 
   const updateGame = (gid) => setGameId(gid);
 
+  const handleDeckChange = (event) => {
+    setDeck(event.target.value);
+  };
+
   return (
     <Grid container className={classes.root} spacing={2}>
       <Grid item xs={12}>
@@ -123,6 +133,14 @@ export default function Create(props) {
                       className={classes.formText}
                       value={playerName}
                     />
+                    <FormControl component="fieldset" style={{ marginTop: 20 }}>
+                      <FormLabel component="legend">{texts.login.deckSelection}</FormLabel>
+                      <RadioGroup row value={deck} onChange={handleDeckChange}>
+                        <FormControlLabel value="full" control={<Radio />} label={texts.login.deckFull} />
+                        <FormControlLabel value="kids" control={<Radio />} label={texts.login.deckKids} />
+                        <FormControlLabel value="classic" control={<Radio />} label={texts.login.deckClassic} />
+                      </RadioGroup>
+                    </FormControl>
                   </form>
                   {!!usedName &&
                     <Typography variant='h6' className={classes.title}>

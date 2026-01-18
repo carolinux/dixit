@@ -50,7 +50,7 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-const DroppableCard = ({ card, cardStatuses, gameState, onClick, onLolDrop, canDrop }) => {
+const DroppableCard = ({ card, cardStatuses, gameState, onClick, onLolDrop, canDrop, imageFolder }) => {
   const [{ isOver, canDropHere }, drop] = useDrop(() => ({
     accept: ItemTypes.LOL_EMOJI,
     drop: () => onLolDrop(card),
@@ -70,13 +70,13 @@ const DroppableCard = ({ card, cardStatuses, gameState, onClick, onLolDrop, canD
         border: isOver && canDropHere ? '2px dashed gold' : 'none',
       }}
     >
-      <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} />
+      <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} imageFolder={imageFolder} />
     </Button>
   );
 };
 
 export default function CardsPlayed(props) {
-  const { cards, gameState, isNarrator, transitionGame, cardStatuses, castLol } = { ...props };
+  const { cards, gameState, isNarrator, transitionGame, cardStatuses, castLol, imageFolder = 'medusa' } = { ...props };
    const [open, setOpen] = useState(false);
   const [cardToSelect, setCardToSelect] = useState(undefined);
   const classes = useStyles();
@@ -137,12 +137,13 @@ export default function CardsPlayed(props) {
             onClick={() => play(card)}
             onLolDrop={castLol}
             canDrop={cardStatuses && cardStatuses.myPlayed !== card}
+            imageFolder={imageFolder}
           />)
         }
 
         {!showDialog && cards.map((card,i) =>
          <Button key={card+"_"+i}>
-            <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} />
+            <HandCard card={card} cardStatuses={cardStatuses} gameState={gameState} imageFolder={imageFolder} />
           </Button>)
         }
 
@@ -152,7 +153,7 @@ export default function CardsPlayed(props) {
 
           <CardMedia
             className={classes.media}
-            image={`${process.env.PUBLIC_URL}/resources/pictures/cards/medusa/${cardToSelect}.jpg`}
+            image={`${process.env.PUBLIC_URL}/resources/pictures/cards/${imageFolder}/${cardToSelect}.jpg`}
             />
 
           <Fragment>

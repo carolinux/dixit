@@ -179,6 +179,7 @@ def games_api():
     if request.method == 'POST':
         player_name = request.json['player']
         game_id = request.json["game"]
+        deck_name = request.json.get("deck", "full")
         if game_id == "new":
             attempt = 0
             while True:
@@ -187,7 +188,7 @@ def games_api():
                 else:
                     uid = generate_cute_id()
                 attempt+=1
-                game = Game(uid, creator=player_name)
+                game = Game(uid, creator=player_name, deck_name=deck_name)
                 added = add_game(red, game)
                 if added:
                     break

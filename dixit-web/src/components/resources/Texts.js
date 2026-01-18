@@ -35,7 +35,11 @@ export const getTexts = (props) => {
       join: 'Join!',
       create: 'Create New Game',
       nameUsed: 'Someone is using already this name...',
-      fullGame: 'The game is full...'
+      fullGame: 'The game is full...',
+      deckSelection: 'Choose deck:',
+      deckFull: 'Full Deck',
+      deckKids: 'Kid-Friendly',
+      deckClassic: 'Classic'
     },
     navigation: {
       scoreNow: 'Score now',
