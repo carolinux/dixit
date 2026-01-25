@@ -46,7 +46,7 @@ export default function Players(props) {
         <ListItemIcon className={player.isNarrator ? classes.narrator : classes.players}>
           <SportsEsportsOutlinedIcon style={{ fill: 'green' }}/>
         </ListItemIcon>
-        {player.name}: {player.score} {player.roundScore > 0 && <span>(+{player.roundScore})</span>}
+        {player.name}{player.isUnranked && ' (U)'}: {player.score} {player.roundScore > 0 && <span>(+{player.roundScore})</span>}
         {player.isNarrator && <ArrowBack style={{ fill: 'green' }}/>}
       </ListItem>
       )}

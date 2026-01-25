@@ -39,7 +39,10 @@ export const getTexts = (props) => {
       deckSelection: 'Choose deck:',
       deckFull: 'Full Deck',
       deckKids: 'Kid-Friendly',
-      deckClassic: 'Classic'
+      deckClassic: 'Classic',
+      rankSelection: 'Creator ranking:',
+      ranked: 'Ranked',
+      unranked: 'Unranked'
     },
     navigation: {
       scoreNow: 'Score now',

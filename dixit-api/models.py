@@ -86,6 +86,7 @@ class Game:
     ai_players: list
     lobby: list  # list of {name: str, status: 'pending'|'approved'|'denied'}
     deck_name: str
+    unranked_players: list  # players who don't receive scores
 
     @staticmethod
     def from_json(json_str: str) -> 'Game':
@@ -96,7 +97,7 @@ class Game:
         d = asdict(self)
         return json.dumps(d)
 
-    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None, lobby=None, deck_name=None):
+    def __init__(self, id=None, currentRound=None, sealedRounds=None, players=None, winners=None, scores=None, narratorIdx=None, cards=None, discards=None, currentState=None, creator=None, stats=None, lolPoints=None, ai_players=None, lobby=None, deck_name=None, unranked_players=None):
         if id is not None:
             self.id = id
         else:
@@ -163,10 +164,14 @@ class Game:
             self.lobby = lobby
         else:
             self.lobby = []
+        if unranked_players is not None:
+            self.unranked_players = unranked_players
+        else:
+            self.unranked_players = []
 
     def start_rematch(self) -> None:
         """Reset game to allow rematch."""
-        self.__init__(id=self.id, players=self.players, creator=self.creator, ai_players=self.ai_players, deck_name=self.deck_name)
+        self.__init__(id=self.id, players=self.players, creator=self.creator, ai_players=self.ai_players, deck_name=self.deck_name, unranked_players=self.unranked_players)
 
     def init_cards(self):
         deck = DECKS.get(self.deck_name, DECKS["full"])
@@ -220,7 +225,8 @@ class Game:
     def get_player_info(self):
         return [{"name": p, 'isNarrator': self.is_narrator(p), 'hasVoted': self.has_voted(p),
                  'hasSetCard': self.has_set_card(p), 'score': self.get_score(p),
-                 'roundScore': self.get_round_score(p), 'isAI': self.is_ai_player(p)} for p in self.players]
+                 'roundScore': self.get_round_score(p), 'isAI': self.is_ai_player(p),
+                 'isUnranked': self.is_unranked(p)} for p in self.players]
 
     def get_score(self, player):
         if not self.is_started() or self.is_abandoned():
@@ -275,6 +281,14 @@ class Game:
 
     def is_ai_player(self, player: str) -> bool:
         return player in self.ai_players
+
+    def is_unranked(self, player: str) -> bool:
+        return player in self.unranked_players
+
+    def add_unranked_player(self, player: str) -> None:
+        """Mark a player as unranked (they won't receive scores)."""
+        if player not in self.unranked_players:
+            self.unranked_players.append(player)
 
     def add_ai_player(self, name: str = None) -> str:
         """Add an AI player to the game. Returns the AI player's name."""
@@ -666,12 +680,14 @@ class Game:
             self.stats['tricksters'][trickster] += num_votes
 
         for p in self.players:
-            self.scores[p] += scores.get(p, 0)
+            if not self.is_unranked(p):
+                self.scores[p] += scores.get(p, 0)
 
         for voter, card in self.currentRound['lols'].items():
             votee = card_to_player[card]
             if self.lolPoints.cast_vote(voter, votee):
-                self.scores[votee]+=1
+                if not self.is_unranked(votee):
+                    self.scores[votee]+=1
                 if votee not in scores:
                     scores[votee] = 0
                 scores[votee]+=1

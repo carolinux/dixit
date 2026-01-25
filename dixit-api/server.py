@@ -180,6 +180,7 @@ def games_api():
         player_name = request.json['player']
         game_id = request.json["game"]
         deck_name = request.json.get("deck", "full")
+        creator_unranked = request.json.get("creator_unranked", False)
         if game_id == "new":
             attempt = 0
             while True:
@@ -192,6 +193,10 @@ def games_api():
                 added = add_game(red, game)
                 if added:
                     break
+            # Mark creator as unranked if requested
+            if creator_unranked:
+                game.add_unranked_player(player_name)
+                update_game(red, game)
         else:
             # logic to handle joining an existing game
             uid = game_id

@@ -50,6 +50,7 @@ export default function Create(props) {
   const [formError, setFormError] = useState(false);
   const [gameId, setGameId] = useState('new');
   const [deck, setDeck] = useState('full');
+  const [creatorUnranked, setCreatorUnranked] = useState(false);
   const axiosWithCookies = axios.create({
   withCredentials: true
 });
@@ -73,7 +74,7 @@ export default function Create(props) {
     if (!!playerName && !!gameId) {
     console.log(process.env)
       const postData = async () => {
-        axiosWithCookies.post(process.env.REACT_APP_API_URL+ '/games', { player: playerName, game: gameId, deck: deck })
+        axiosWithCookies.post(process.env.REACT_APP_API_URL+ '/games', { player: playerName, game: gameId, deck: deck, creator_unranked: creatorUnranked })
           .then(res => {
             console.log(res.data);
             history.push('/board/'+res.data['game']);
@@ -115,6 +116,10 @@ export default function Create(props) {
     setDeck(event.target.value);
   };
 
+  const handleRankChange = (event) => {
+    setCreatorUnranked(event.target.value === 'unranked');
+  };
+
   return (
     <Grid container className={classes.root} spacing={2}>
       <Grid item xs={12}>
@@ -139,6 +144,13 @@ export default function Create(props) {
                         <FormControlLabel value="full" control={<Radio />} label={texts.login.deckFull} />
                         <FormControlLabel value="kids" control={<Radio />} label={texts.login.deckKids} />
                         <FormControlLabel value="classic" control={<Radio />} label={texts.login.deckClassic} />
+                      </RadioGroup>
+                    </FormControl>
+                    <FormControl component="fieldset" style={{ marginTop: 20 }}>
+                      <FormLabel component="legend">{texts.login.rankSelection}</FormLabel>
+                      <RadioGroup row value={creatorUnranked ? 'unranked' : 'ranked'} onChange={handleRankChange}>
+                        <FormControlLabel value="ranked" control={<Radio />} label={texts.login.ranked} />
+                        <FormControlLabel value="unranked" control={<Radio />} label={texts.login.unranked} />
                       </RadioGroup>
                     </FormControl>
                   </form>
