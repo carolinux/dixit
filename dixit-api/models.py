@@ -17,7 +17,7 @@ MIN_PLAYERS = 2  # for testing - in reality two players breaks the winner podium
 MAX_PLAYERS = 12
 INITIAL_CARD_ALLOCATION = 6
 WIN_SCORE = 36
-MAX_CARD = 135
+MAX_CARD = 143
 INITIAL_LOLPOINTS = 3
 
 
@@ -35,8 +35,8 @@ class Deck:
 
 # Deck definitions
 DECKS = {
-    "full": Deck("full", 135, "medusa", set()),
-    "kids": Deck("kids", 135, "medusa", {3, 15, 30, 41, 66, 89, 100, 125, 134}),
+    "full": Deck("full", MAX_CARD, "medusa", set()),
+    "kids": Deck("kids", MAX_CARD, "medusa", {3, 15, 30, 41, 66, 89, 100, 125, 134}),
     "classic": Deck("classic", 70, "original", set()),
 }
 
