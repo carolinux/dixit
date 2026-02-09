@@ -399,7 +399,7 @@ class Game:
         if self.currentState == WAITING_FOR_PLAYERS:
             # do not reveal the cards to the frontend
             return (1 + len(self.currentRound['decoys'])) * ['back']
-        if self.currentState in (WAITING_FOR_VOTES, ROUND_REVEALED):
+        if self.currentState in (WAITING_FOR_VOTES, ROUND_REVEALED, GAME_ENDED):
             return self.currentRound['allCards']
         return []
 
