@@ -1,3 +1,4 @@
+#!/bin/bash
 has_param() {
     local term="$1"
     shift

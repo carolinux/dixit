@@ -29,7 +29,7 @@
   "scripts": {
     "start": "REACT_APP_API_URL='http://127.0.0.1:5000' react-scripts start",
     "build": "REACT_APP_API_URL='https://dixit.lucidcode.ch' react-scripts build",
-    "buildlocal": "REACT_APP_API_URL='http://0.0.0.0:8000' react-scripts build",
+    "buildlocal": "REACT_APP_API_URL='http://localhost:8000' react-scripts build",
     "test": "react-scripts test",
     "serve": "serve -s build -l 8000"
   },
