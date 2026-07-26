@@ -36,7 +36,7 @@ class Deck:
 # Deck definitions
 DECKS = {
     "full": Deck("full", MAX_CARD, "medusa", set()),
-    "kids": Deck("kids", MAX_CARD, "medusa", {3, 15, 30, 41, 66, 89, 100, 125, 134}),
+    "kids": Deck("kids", MAX_CARD, "medusa", {3, 15, 30, 41, 66, 89, 100, 125, 134, 177}),
     "classic": Deck("classic", 70, "original", set()),
 }
 
